@@ -11,7 +11,10 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.springJava.jobTracker.model.Company;
 import com.springJava.jobTracker.model.Job;
+import com.springJava.jobTracker.model.Profile;
+import com.springJava.jobTracker.model.User;
 import com.springJava.jobTracker.repo.EmpRepo;
 import com.springJava.jobTracker.repo.JobRepo;
 import com.springJava.jobTracker.repo.ProfileRepo;
@@ -41,7 +44,7 @@ public class WebController {
 	@RequestMapping(value = "/users/create", method = { RequestMethod.POST })
 	public ResponseEntity<?> createUser(String emailid, String username, String password) {
 		User user = userRepo.findByEmailid(emailid);
-		Employer employer = empRepo.findByEmailid(emailid);
+		Company employer = empRepo.findByEmailid(emailid);
 		if( user != null || employer != null)
 		{
 			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.BAD_REQUEST.value(),
@@ -59,13 +62,13 @@ public class WebController {
 	public ResponseEntity<?> createEmployer(String emailid, String company_name, String password, String website, String address, 
 			String description, String logo) {
 		User user = userRepo.findByEmailid(emailid);
-		Employer employer = empRepo.findByEmailid(emailid);
+		Company employer = empRepo.findByEmailid(emailid);
 		if( user != null || employer !=null)
 		{
 			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.BAD_REQUEST.value(),
 					"Emailid with " +emailid+ " is already registered, try logging in."), HttpStatus.BAD_REQUEST);
 		}
-		employer = new Employer(emailid, company_name, password, website, address, description, logo);      // need to encrypt password
+		employer = new Company(emailid, company_name, password, website, address, description, logo);      // need to encrypt password
 		empRepo.save(employer);
 
 		String msg = "Employer with id " + employer.getEmpid() + "is created successfully";
@@ -104,7 +107,7 @@ public class WebController {
 		Job job = new Job(job_title, empID, company_name, skill, desc, location, salary, status);
 		jobRepo.save(job);
 
-		String msg = "Job with id " + job.getId() + "is posted successfully";
+		String msg = "Job with id " + job.getJobid() + "is posted successfully";
 		return new ResponseEntity<>(msg, HttpStatus.CREATED);
 	}
 	

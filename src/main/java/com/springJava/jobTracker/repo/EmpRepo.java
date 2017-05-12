@@ -1,8 +1,9 @@
 package com.springJava.jobTracker.repo;
 
 import org.springframework.data.repository.CrudRepository;
-import com.springJava.jobTracker.model.Employer;
 
-public interface EmpRepo extends CrudRepository<Employer, Long> {
-	Employer findByEmailid(String emailid);
+import com.springJava.jobTracker.model.Company;
+
+public interface EmpRepo extends CrudRepository<Company, Long> {
+	Company findByEmailid(String emailid);
 }

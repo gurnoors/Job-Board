@@ -5,6 +5,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.springJava.jobTracker.model.Profile;
+
 public interface ProfileRepo extends CrudRepository<Profile, Long>{
 	
 	@Transactional
