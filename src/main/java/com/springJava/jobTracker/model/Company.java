@@ -22,10 +22,11 @@ public class Company {
 	@Column(unique = true, nullable = false)
 	private Long companyid;
 
+	@Column(unique = true, nullable = false)
 	private String name;
 
 	@Column(unique = true, nullable = false)
-	private String registered_email;
+	private String emailid;
 
 	private String website;
 	private String address;
@@ -44,7 +45,7 @@ public class Company {
 		super();
 		this.companyid = companyid;
 		this.name = name;
-		this.registered_email = registered_email;
+		this.emailid = registered_email;
 		this.website = website;
 		this.address = address;
 		this.description = description;
@@ -67,14 +68,6 @@ public class Company {
 
 	public void setName(String name) {
 		this.name = name;
-	}
-
-	public String getRegistered_email() {
-		return registered_email;
-	}
-
-	public void setRegistered_email(String registered_email) {
-		this.registered_email = registered_email;
 	}
 
 	public String getWebsite() {
@@ -123,6 +116,14 @@ public class Company {
 
 	public void setJobs(List<Job> jobs) {
 		this.jobs = jobs;
+	}
+
+	public String getEmailid() {
+		return emailid;
+	}
+
+	public void setEmailid(String emailid) {
+		this.emailid = emailid;
 	}
 
 

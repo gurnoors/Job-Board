@@ -23,7 +23,8 @@ public class Job {
 	private Long jobid;
 
 	private String jobtitle;
-//	private String company_id;
+	
+	@Column(nullable = false)
 	private String companyname;
 	
 	@ElementCollection
@@ -32,14 +33,14 @@ public class Job {
 	private String description;
 	private String location;
 	private int salary;
-	private Status status;
+	private JobStatus status;
 	
 	@ManyToOne(fetch=FetchType.LAZY)
 	@JoinColumn(name="companyid")
 	private Company company;
 	
 	public Job(Long jobid, String jobtitle, String companyname, List<String> skill, String description, String location,
-			int salary, Status status, Company company) {
+			int salary, JobStatus status, Company company) {
 		super();
 		this.jobid = jobid;
 		this.jobtitle = jobtitle;
@@ -111,11 +112,11 @@ public class Job {
 		this.salary = salary;
 	}
 
-	public Status getStatus() {
+	public JobStatus getStatus() {
 		return status;
 	}
 
-	public void setStatus(Status status) {
+	public void setStatus(JobStatus status) {
 		this.status = status;
 	}
 

@@ -1,5 +1,5 @@
 package com.springJava.jobTracker.model;
 
-public enum Status {
+public enum JobStatus {
 	OPEN, FILLED, CANCELLED;
 }
