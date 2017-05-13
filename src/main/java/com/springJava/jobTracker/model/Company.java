@@ -40,10 +40,10 @@ public class Company {
 	public Company() {
 	}
 	
-	public Company(Long companyid, String name, String registered_email, String website, String address,
-			String description, String logo_image, String password, List<Job> jobs) {
+	public Company(String name, String registered_email, String website, String address,
+			String description, String logo_image, String password) {
 		super();
-		this.companyid = companyid;
+		//this.companyid = companyid;
 		this.name = name;
 		this.emailid = registered_email;
 		this.website = website;
@@ -51,7 +51,6 @@ public class Company {
 		this.description = description;
 		this.logo_image = logo_image;
 		this.password = password;
-		this.jobs = jobs;
 	}
 
 	public Long getCompanyid() {

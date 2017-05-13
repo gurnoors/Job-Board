@@ -18,9 +18,8 @@ import javax.persistence.Table;
 public class Profile {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
-	@Column(name = "profileid", unique = true, nullable = false)
-	private Long profileid;
+	@Column(name = "userid", unique = true, nullable = false)
+	private Long userid;
 
 	@Column(name = "firstname", nullable = false)
 	private String firstname;
@@ -46,7 +45,7 @@ public class Profile {
 	public Profile(Long userid, String firstname, String lastname, String imageloc, String intro, String workex,
 			String education, List<String> skills, String phone) {
 		super();
-		this.profileid = userid;
+		this.userid = userid;
 		this.firstname = firstname;
 		this.lastname = lastname;
 		this.imageloc = imageloc;
@@ -61,11 +60,11 @@ public class Profile {
 	}
 
 	public Long getUserid() {
-		return profileid;
+		return userid;
 	}
 
 	public void setUserid(Long userid) {
-		this.profileid = userid;
+		this.userid = userid;
 	}
 
 	public String getFirstname() {

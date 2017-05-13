@@ -59,7 +59,7 @@ public class WebController {
 	
 	// Employer sign up
 	@RequestMapping(value = "/employers/create", method = { RequestMethod.POST })
-	public ResponseEntity<?> createEmployer(String emailid, String company_name, String password, String website, String address, 
+	public ResponseEntity<?> createCompany(String emailid, String company_name, String password, String website, String address, 
 			String description, String logo) {
 		User user = userRepo.findByEmailid(emailid);
 		Company employer = empRepo.findByEmailid(emailid);
@@ -71,45 +71,73 @@ public class WebController {
 		employer = new Company(emailid, company_name, password, website, address, description, logo);      // need to encrypt password
 		empRepo.save(employer);
 
-		String msg = "Employer with id " + employer.getEmpid() + "is created successfully";
+		String msg = "Employer with id " + employer.getCompanyid() + "is created successfully";
 		return new ResponseEntity<>(msg, HttpStatus.CREATED); 						// need to send an email notification as well.	
 	}
 	
+	/**
+	 * @author anubha
+	 * @param userid
+	 * @param firstname
+	 * @param lastname
+	 * @param picture
+	 * @param intro
+	 * @param workex
+	 * @param education
+	 * @param skills
+	 * @param phone
+	 * @return
+	 */
 	// Job seeker profile create  -- shud be same for update as well
-	@RequestMapping(value = "/users/profile/{userid}", method = { RequestMethod.POST })			//need to change the entry point
-	public ResponseEntity<?> createUserProfile(@PathVariable("id") Long userid, String firstname, String lastname, 				
-			@RequestParam(value = "picture", defaultValue = "null") String picture, 			// data type for image?
-			@RequestParam(value = "intro", defaultValue = "null") String intro, 
-			String workex, String education, String skills, String phone) {								// check for data type of education (double?)
-		User user = userRepo.findByUserid(userid);
-		if( user == null)
-		{
-			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
-					"User with id " + userid + "not found"), HttpStatus.NOT_FOUND);
-		}
-		Profile profile = profileRepo.findOne(userid);
-		if(profile == null) {
-			Profile profile = new Profile(userid, firstname, lastname, picture, intro, workex, education, skills, phone);
-			profileRepo.save(profile);
-		}
-		else {
-			profileRepo.updateProfile(firstname, lastname, picture, intro, workex, education, skills, phone, userid);
-		}
-		
-		String msg = "Profile with userid " + userid + "is updated successfully";
-		return new ResponseEntity<>(msg, HttpStatus.OK); 						// need to send an email notification as well.	
-	}
+//	@RequestMapping(value = "/users/profile/{userid}", method = { RequestMethod.POST })			//need to change the entry point
+//	public ResponseEntity<?> createUserProfile(@PathVariable("id") Long userid, String firstname, String lastname, 				
+//			@RequestParam(value = "picture", defaultValue = "null") String picture, 			// data type for image?
+//			@RequestParam(value = "intro", defaultValue = "null") String intro, 
+//			String workex, String education, String skills, String phone) {								// check for data type of education (double?)
+//		User user = userRepo.findOne(userid);
+//		if( user == null)
+//		{
+//			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
+//					"User with id " + userid + "not found"), HttpStatus.NOT_FOUND);
+//		}
+//		//Profile profile = profileRepo.findOne(userid);
+//		Profile profile = profileRepo.findOne(userid);
+//		if(profile == null) {
+//			profile = new Profile(userid, firstname, lastname, picture, intro, workex, education, skills, phone);
+//			profileRepo.save(profile);
+//		}
+//		
+//		else {
+//			profileRepo.updateProfile(firstname, lastname, picture, intro, workex, education, skills, phone, userid);
+//		}
+//		
+//		String msg = "Profile with userid " + userid + "is updated successfully";
+//		return new ResponseEntity<>(msg, HttpStatus.OK); 						// need to send an email notification as well.	
+//	}
 	
 	// Post a job
-	@RequestMapping(value = "/jobs", method = { RequestMethod.POST })
-	public ResponseEntity<?> postJob(String job_title, long empID, String company_name, String skill, String desc, String location,
-			float salary, String status) {	// company id and name shud be taken from employer table based on login and not i/p from employer
-		Job job = new Job(job_title, empID, company_name, skill, desc, location, salary, status);
-		jobRepo.save(job);
-
-		String msg = "Job with id " + job.getJobid() + "is posted successfully";
-		return new ResponseEntity<>(msg, HttpStatus.CREATED);
-	}
+	
+	/**
+	 * @author anubha
+	 * @param job_title
+	 * @param empID
+	 * @param company_name
+	 * @param skill
+	 * @param desc
+	 * @param location
+	 * @param salary
+	 * @param status
+	 * @return
+	 */
+//	@RequestMapping(value = "/jobs", method = { RequestMethod.POST })
+//	public ResponseEntity<?> postJob(String job_title, Long empID, String company_name, String skill, String desc, String location,
+//			String salary, String status) {	// company id and name shud be taken from employer table based on login and not i/p from employer
+//		Job job = new Job(job_title, empID, company_name, skill, desc, location, salary, status);
+//		jobRepo.save(job);
+//
+//		String msg = "Job with id " + job.getJobid() + "is posted successfully";
+//		return new ResponseEntity<>(msg, HttpStatus.CREATED);
+//	}
 	
 	// Update a job
 	@RequestMapping(value = "/jobs/{id}", method = { RequestMethod.PUT })
@@ -122,7 +150,7 @@ public class WebController {
 					"Not found"), HttpStatus.NOT_FOUND);
 		}
 
-		jobRepo.updateJobDetails(job_title, empID, company_name, skill, desc, location, salary, status, id);
+//		jobRepo.updateJobDetails(job_title, empID, company_name, skill, desc, location, salary, status, id);
 
 		String msg = "Job with id " + id + "is updated successfully";
 		return new ResponseEntity<>(msg, HttpStatus.OK);

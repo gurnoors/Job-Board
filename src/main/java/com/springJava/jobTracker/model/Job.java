@@ -39,10 +39,9 @@ public class Job {
 	@JoinColumn(name="companyid")
 	private Company company;
 	
-	public Job(Long jobid, String jobtitle, String companyname, List<String> skill, String description, String location,
+	public Job( String jobtitle, String companyname, List<String> skill, String description, String location,
 			int salary, JobStatus status, Company company) {
 		super();
-		this.jobid = jobid;
 		this.jobtitle = jobtitle;
 		this.companyname = companyname;
 		this.skill = skill;

@@ -27,16 +27,18 @@ public class User implements Serializable{
 	@Column(name="emailid", unique=true, nullable=false)
 	private String emailid;
 
-	@OneToOne(fetch=FetchType.LAZY)
-	@JoinColumn(name="profileid")
-	private Profile profile;
+//	@OneToOne(fetch=FetchType.LAZY)
+//	@JoinColumn(name="profileid")
+//	private Profile profile;
+
+	private String password;
 	
-	public User(Long userid, String username, String emailid, Profile profile) {
+//	public User(String username, String emailid, Profile profile) {
+	public User(String username, String emailid, String password) {
 		super();
-		this.userid = userid;
 		this.username = username;
 		this.emailid = emailid;
-		this.profile = profile;
+		this.password = password;
 	}
 
 	/**
@@ -71,12 +73,13 @@ public class User implements Serializable{
 	public User() {
 	}
 
-	public Profile getProfile() {
-		return profile;
+
+	public String getPassword() {
+		return password;
 	}
 
-	public void setProfile(Profile profile) {
-		this.profile = profile;
+	public void setPassword(String password) {
+		this.password = password;
 	}
 		
 	
