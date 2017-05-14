@@ -31,14 +31,22 @@ public class User implements Serializable{
 //	@JoinColumn(name="profileid")
 //	private Profile profile;
 
+	@Column(name="password")
 	private String password;
 	
+	@Column(name="verificationcode")
+	private String verificationcode;
+	
+	@Column(name="status")
+	private boolean status = false;
+	
 //	public User(String username, String emailid, Profile profile) {
-	public User(String username, String emailid, String password) {
+	public User(String username, String emailid, String password, String verificationcode) {
 		super();
 		this.username = username;
 		this.emailid = emailid;
 		this.password = password;
+		this.verificationcode = verificationcode;
 	}
 
 	/**
@@ -80,6 +88,22 @@ public class User implements Serializable{
 
 	public void setPassword(String password) {
 		this.password = password;
+	}
+
+	public String getVerificationcode() {
+		return verificationcode;
+	}
+
+	public void setVerificationcode(String verificationcode) {
+		this.verificationcode = verificationcode;
+	}
+
+	public boolean isStatus() {
+		return status;
+	}
+
+	public void setStatus(boolean status) {
+		this.status = status;
 	}
 		
 	

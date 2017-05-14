@@ -39,11 +39,11 @@ public class Job {
 	@JoinColumn(name="companyid")
 	private Company company;
 	
-	public Job( String jobtitle, String companyname, List<String> skill, String description, String location,
+	public Job(String jobtitle, List<String> skill, String description, String location,
 			int salary, JobStatus status, Company company) {
 		super();
 		this.jobtitle = jobtitle;
-		this.companyname = companyname;
+	//	this.companyname = companyname;
 		this.skill = skill;
 		this.description = description;
 		this.location = location;

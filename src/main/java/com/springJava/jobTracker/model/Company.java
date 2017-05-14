@@ -33,6 +33,8 @@ public class Company {
 	private String description;
 	private String logo_image;
 	private String password;
+	private String verificationcode;
+	private boolean status = false;
 	
 	@OneToMany(mappedBy = "company")
 	private List<Job> jobs;
@@ -40,8 +42,8 @@ public class Company {
 	public Company() {
 	}
 	
-	public Company(String name, String registered_email, String website, String address,
-			String description, String logo_image, String password) {
+	public Company(String name, String registered_email, String password, String website, String address,
+			String description, String logo_image, String verificationcode) {
 		super();
 		//this.companyid = companyid;
 		this.name = name;
@@ -51,6 +53,7 @@ public class Company {
 		this.description = description;
 		this.logo_image = logo_image;
 		this.password = password;
+		this.verificationcode = verificationcode;
 	}
 
 	public Long getCompanyid() {
@@ -123,6 +126,22 @@ public class Company {
 
 	public void setEmailid(String emailid) {
 		this.emailid = emailid;
+	}
+
+	public String getVerificationcode() {
+		return verificationcode;
+	}
+
+	public void setVerificationcode(String verificationcode) {
+		this.verificationcode = verificationcode;
+	}
+
+	public boolean isStatus() {
+		return status;
+	}
+
+	public void setStatus(boolean status) {
+		this.status = status;
 	}
 
 

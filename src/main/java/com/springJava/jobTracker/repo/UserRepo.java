@@ -7,4 +7,5 @@ import com.springJava.jobTracker.model.User;
 
 public interface UserRepo extends CrudRepository<User, Long>{
 	User findByEmailid(String emailid);
+	User findByUsername(String username);
 }
