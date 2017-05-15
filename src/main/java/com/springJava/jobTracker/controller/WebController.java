@@ -114,12 +114,13 @@ public class WebController {
 		String code = String.format("%04d", rand.nextInt(10000));
 		company = new Company(company_name, emailid, password, website, address, description, logo, code);      // need to encrypt password
 		compRepo.save(company);
+		sendEmail("anubha.mandal@sjsu.edu","verification code", "your verification code is " + company.getVerificationcode());
 		String msg = "Employer with id " + company.getCompanyid() + "is created successfully";
 		return new ResponseEntity<>(msg, HttpStatus.CREATED); 						// need to send an email notification as well.	
 	}
 	
 	// Employer verification
-	@RequestMapping(value = "/employers/verify/{userid}", method = { RequestMethod.POST })
+	@RequestMapping(value = "/employers/verify/{companyid}", method = { RequestMethod.POST })
 	public ResponseEntity<?> verifyCompany(@PathVariable("companyid") Long companyid, String code){
 		Company company = compRepo.findOne(companyid);
 		if(!company.getVerificationcode().equals(code))
@@ -147,12 +148,12 @@ public class WebController {
 		}
 		Profile profile = profileRepo.findOne(userid);
 		if(profile == null) {
-			List<String> skillList = Arrays.asList(skills.split("\\,"));
-			profile = new Profile(userid, firstname, lastname, picture, intro, workex, education, skillList, phone);
+			//List<String> skillList = Arrays.asList(skills.split("\\,"));
+			profile = new Profile(userid, firstname, lastname, picture, intro, workex, education, skills, phone);
 			profileRepo.save(profile);
 		}
 		else {
-	//		profileRepo.updateProfile(firstname, lastname, picture, intro, workex, education, skills, phone, userid);
+			profileRepo.updateProfile(firstname, lastname, picture, intro, workex, education, skills, phone, userid);
 		}
 		
 		String msg = "Profile with userid " + userid + "is updated successfully";
@@ -160,12 +161,16 @@ public class WebController {
 	}
 	
 	// Post a job
-	@RequestMapping(value = "/jobs", method = { RequestMethod.POST })
-	public ResponseEntity<?> postJob(String job_title, long compId, String skills, String desc, String location,
-			int salary, JobStatus status) {	// company id and name shud be taken from employer table based on login and not i/p from employer
-		List<String> skillList = Arrays.asList(skills.split("\\,"));
-		Company company = compRepo.findOne(compId);
-		Job job = new Job(job_title, skillList, desc, location, salary, status, company);
+	@RequestMapping(value = "/jobs/post/{companyid}", method = { RequestMethod.POST })
+	public ResponseEntity<?> postJob(@PathVariable("companyid") Long companyid, String job_title, String skills, String desc, String location,
+			int salary, JobStatus status) { //OPEN, FILLED, CANCELLED
+		//List<String> skillList = Arrays.asList(skills.split("\\,"));
+		Company company = compRepo.findOne(companyid);
+		if (company == null){
+			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
+					"Company with id " + companyid + "not found"), HttpStatus.NOT_FOUND);
+		}
+		Job job = new Job(job_title, skills, desc, location, salary, status, company);
 		jobRepo.save(job);
 
 		String msg = "Job with id " + job.getJobid() + "is posted successfully";
@@ -174,15 +179,15 @@ public class WebController {
 	
 	// Update a job
 	@RequestMapping(value = "/jobs/{id}", method = { RequestMethod.PUT })
-	public ResponseEntity<?> updateJob(@PathVariable("id") Long id, String job_title, String skills, String desc, String location, int salary, String status) {	
-		// company id and name shud be taken from employer table based on login and not i/p from employer
+	public ResponseEntity<?> updateJob(@PathVariable("id") Long id, String job_title, String skills, String desc, String location, int salary, JobStatus status) {	
+		// company id and name should be taken from company table based on login
 		Job job = jobRepo.findOne(id);
 		if (job == null) {
 			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
 					"Not found"), HttpStatus.NOT_FOUND);
 		}
 
-	//	jobRepo.updateJobDetails(job_title, empID, company_name, skill, desc, location, salary, status, id);
+		jobRepo.updateJobDetails(job_title, skills, desc, location, salary, status, id);
 
 		String msg = "Job with id " + id + "is updated successfully";
 		return new ResponseEntity<>(msg, HttpStatus.OK);
@@ -205,14 +210,12 @@ public class WebController {
 		boolean compFlag = false;
 		boolean locFlag = false;
 		boolean salFlag = false;
-		
-		
 		return null;
 	}
 	
 	public void sendEmail(String to, String subject, String text) {
         try {
-            String from = "anubha.mandal@sjsu.edu";
+            String from = "cmpe275.project.grp36@gmail.com";
             springEmailService.send(from, to, subject, text);//, inputStream, fileName, mimeType);
 
            // Notification.show("Email sent");

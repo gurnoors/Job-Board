@@ -37,13 +37,16 @@ public class Profile {
 	private String education;
 
 	@Column(nullable = false)
-	@ElementCollection
-	private List<String> skills;
+	//@ElementCollection
+	//private List<String> skills;
+	String skills;
 	
 	private String phone;
 	
+	//public Profile(Long userid, String firstname, String lastname, String imageloc, String intro, String workex,
+	//		String education, List<String> skills, String phone) {
 	public Profile(Long userid, String firstname, String lastname, String imageloc, String intro, String workex,
-			String education, List<String> skills, String phone) {
+				String education, String skills, String phone) {
 		super();
 		this.userid = userid;
 		this.firstname = firstname;
@@ -115,11 +118,11 @@ public class Profile {
 		this.education = education;
 	}
 
-	public List<String> getSkills() {
+	public String getSkills() {
 		return skills;
 	}
 
-	public void setSkills(List<String> skills) {
+	public void setSkills(String skills) {
 		this.skills = skills;
 	}
 

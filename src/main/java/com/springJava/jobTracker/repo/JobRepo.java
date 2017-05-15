@@ -7,13 +7,14 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.springJava.jobTracker.model.Job;
+import com.springJava.jobTracker.model.JobStatus;
 
 
 public interface JobRepo extends CrudRepository<Job, Long>{
-/*	
+
 	@Transactional
     @Modifying(clearAutomatically = true)
-	@Query("update Job p set p.jobtitle=?1, p.empID=?2, p.companyName=?3, p.skill=?4, p.desc=?5, p.location=?6, p.salary=?7, p.status=?8 where p.id=?9")
-	void updateJobDetails(String job_title, Long empID, String company_name, String skill, String desc, String location, float salary, String status, Long id);
-*/
+	@Query("update Job p set p.jobtitle=?1, p.skill=?2, p.description=?3, p.location=?4, p.salary=?5, p.status=?6 where p.id=?7")
+	void updateJobDetails(String job_title, String skill, String desc, String location, int salary, JobStatus status, Long id);
+
 }

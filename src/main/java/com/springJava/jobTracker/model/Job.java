@@ -24,26 +24,25 @@ public class Job {
 
 	private String jobtitle;
 	
-	@Column(nullable = false)
-	private String companyname;
-	
-	@ElementCollection
-	private List<String> skill;
+	//@ElementCollection
+	//private List<String> skill;
+	private String skill;
 	
 	private String description;
 	private String location;
 	private int salary;
 	private JobStatus status;
 	
-	@ManyToOne(fetch=FetchType.LAZY)
+	@ManyToOne(fetch=FetchType.EAGER)
 	@JoinColumn(name="companyid")
 	private Company company;
 	
-	public Job(String jobtitle, List<String> skill, String description, String location,
-			int salary, JobStatus status, Company company) {
+	//public Job(String jobtitle, List<String> skill, String description, String location,
+	//		int salary, JobStatus status, Company company) {
+	public Job(String jobtitle, String skill, String description, String location,
+				int salary, JobStatus status, Company company) {
 		super();
 		this.jobtitle = jobtitle;
-	//	this.companyname = companyname;
 		this.skill = skill;
 		this.description = description;
 		this.location = location;
@@ -71,19 +70,19 @@ public class Job {
 		this.jobtitle = jobtitle;
 	}
 
-	public String getCompanyname() {
-		return companyname;
+/*	public String getCompanyname() {
+		return getCompany().getName();
 	}
 
 	public void setCompanyname(String companyname) {
 		this.companyname = companyname;
 	}
-
-	public List<String> getSkill() {
+*/
+	public String getSkill() {
 		return skill;
 	}
 
-	public void setSkill(List<String> skill) {
+	public void setSkill(String skill) {
 		this.skill = skill;
 	}
 
