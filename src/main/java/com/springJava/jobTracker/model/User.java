@@ -37,7 +37,8 @@ public class User implements Serializable{
 	@Column(name="verificationcode")
 	private String verificationcode;
 	
-	@Column(name="status")
+//	@Column(name="status", nullable=false)
+	@Column(name="status", columnDefinition="boolean not null default 0")
 	private boolean status = false;
 	
 //	public User(String username, String emailid, Profile profile) {

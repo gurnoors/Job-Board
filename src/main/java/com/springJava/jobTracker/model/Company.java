@@ -34,6 +34,8 @@ public class Company {
 	private String logo_image;
 	private String password;
 	private String verificationcode;
+	
+	@Column(name="status", columnDefinition="boolean not null default 0")
 	private boolean status = false;
 	
 	@OneToMany(mappedBy = "company")
