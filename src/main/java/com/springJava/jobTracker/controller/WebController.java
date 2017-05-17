@@ -1,11 +1,15 @@
 package com.springJava.jobTracker.controller;
 
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Propagation;
@@ -16,6 +20,10 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.springJava.jobTracker.model.Company;
 import com.springJava.jobTracker.model.Job;
 import com.springJava.jobTracker.model.JobStatus;
@@ -30,7 +38,9 @@ import com.springJava.jobTracker.repo.UserRepo;
 @RestController
 @Transactional(propagation = Propagation.REQUIRES_NEW)
 public class WebController {
-
+	
+	Gson gson = new GsonBuilder().setPrettyPrinting().create();
+	
 	@Autowired
 	JobRepo jobRepo;
 	@Autowired
@@ -51,7 +61,17 @@ public class WebController {
 
 	// Job seeker sign up
 	@RequestMapping(value = "/users/create", method = { RequestMethod.POST })
-	public ResponseEntity<?> createUser(String username, String emailid, String password) {
+	public ResponseEntity<?> createUser(HttpServletRequest request, HttpEntity<String> httpEntity) throws UnsupportedEncodingException {
+		request.setCharacterEncoding("UTF-8");
+		String body = httpEntity.getBody();
+
+		// read body
+		JsonElement jelem = gson.fromJson(body, JsonElement.class);
+		JsonObject jobj = jelem.getAsJsonObject();
+		String username = jobj.get("username").getAsString();
+		String password = jobj.get("password").getAsString();
+		String emailid = jobj.get("emailid").getAsString();
+		
 		User user = userRepo.findByEmailid(emailid);
 		Company company = compRepo.findByEmailid(emailid);
 		if (user != null || company != null) {
@@ -71,27 +91,46 @@ public class WebController {
 															// password
 		userRepo.save(user);
 
-		sendEmail("anubha.mandal@sjsu.edu", "verification code",
-				"your verification code is " + user.getVerificationcode());
+		//sendEmail(emailid, "verification code",
+				//"your verification code is " + user.getVerificationcode());
 		String msg = "User with id " + user.getUserid() + " is created successfully";
-		return new ResponseEntity<>(msg, HttpStatus.CREATED); // need to send an
+		return new ResponseEntity<String>(msg, HttpStatus.CREATED); // need to send an
 																// email
 																// notification
 																// as well.
 	}
 
 	// job seeker verification
-	@RequestMapping(value = "/users/verify/{userid}", method = { RequestMethod.POST })
-	public ResponseEntity<?> verifyUser(@PathVariable("userid") Long userid, String code) {
-		User user = userRepo.findOne(userid);
-		if (!user.getVerificationcode().equals(code)) {
-			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.UNAUTHORIZED.value(),
-					"Entered verification code does not match. Try Again"), HttpStatus.UNAUTHORIZED);
+	@RequestMapping(value = "/users/verify", method = { RequestMethod.POST })
+	public ResponseEntity<?> verifyUser(@RequestParam("emailid") String emailid, @RequestParam("code") String code) {
+		User user = userRepo.findByEmailid(emailid);
+		String msg = null;
+		if (user != null) {
+			if (!user.getVerificationcode().equals(code)) {
+				return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.UNAUTHORIZED.value(),
+						"Entered verification code does not match. Try Again"), HttpStatus.UNAUTHORIZED);
+			}
+			else{
+				user.setStatus(true);
+				msg = "User with id " + user.getEmailid() + " is verified successfully";
+				sendEmail("anubha.mandal@sjsu.edu", "Welcome to the site", "you account has been created successfully.");
+			}
+		} else {
+			Company company = compRepo.findByEmailid(emailid);
+			if (company != null) {
+				if (!company.getVerificationcode().equals(code)) {
+					return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.UNAUTHORIZED.value(),
+							"Entered verification code does not match. Try Again"), HttpStatus.UNAUTHORIZED);
+				}
+			 else {
+				company.setStatus(true);
+				msg = "User with id " + company.getEmailid() + " is verified successfully";
+				sendEmail("anubha.mandal@sjsu.edu", "Welcome to the site", "you account has been created successfully.");
+			}
+			}
 		}
-		user.setStatus(true);
-		String msg = "User with id " + user.getUserid() + " is verified successfully";
-		sendEmail("anubha.mandal@sjsu.edu", "Welcome to the site", "you account has been created successfully.");
-		return new ResponseEntity<>(msg, HttpStatus.CREATED);
+		return new ResponseEntity<>(msg, HttpStatus.OK);
+		
 	}
 
 	// Employer sign up
