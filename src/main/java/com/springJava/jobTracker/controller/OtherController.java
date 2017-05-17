@@ -1,12 +1,11 @@
 package com.springJava.jobTracker.controller;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.constraints.Null;
 
-import org.mockito.exceptions.PrintableInvocation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
@@ -30,8 +29,6 @@ import com.springJava.jobTracker.repo.CompanyRepo;
 import com.springJava.jobTracker.repo.JobRepo;
 import com.springJava.jobTracker.repo.ProfileRepo;
 import com.springJava.jobTracker.repo.UserRepo;
-
-import javassist.expr.NewArray;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -133,20 +130,20 @@ public class OtherController {
 	@RequestMapping(value = "/logout", method = { RequestMethod.GET })
 	@ResponseBody
 	public ResponseEntity<?> logout(HttpServletRequest request) {
-		boolean alreadyLogged = false; 
+		boolean alreadyLogged = false;
 		if (request.getSession().getAttribute("loggedIn") == null) {
 			alreadyLogged = true;
 		}
 		request.getSession().setAttribute("loggedIn", null);
 		request.getSession().setAttribute("email", null);
-		if(alreadyLogged){
+		if (alreadyLogged) {
 			return new ResponseEntity<ControllerError>(
 					new ControllerError(HttpStatus.OK.value(), "Logged out. You were not logged in though ;P"),
 					HttpStatus.OK);
-		}else{
+		} else {
 			return new ResponseEntity<>(HttpStatus.OK);
 		}
-		
+
 	}
 
 	/**
@@ -253,20 +250,20 @@ public class OtherController {
 	 * @param companyId
 	 * @return
 	 */
-	@RequestMapping(value = "/employers/{companyId}/update", method = { RequestMethod.PUT })
+	@RequestMapping(value = "/employers/{companyEmail}/update", method = { RequestMethod.PUT })
 	@ResponseBody
-	public ResponseEntity<?> updateCompany(HttpServletRequest request, @PathVariable Long companyId,
+	public ResponseEntity<?> updateCompany(HttpServletRequest request, @PathVariable String companyEmail,
 			HttpEntity<String> httpEntity) {
-
-		if (!((String) request.getSession().getAttribute("loggedIn")).equals("employer")) {
+		if (request.getSession().getAttribute("loggedIn") == null
+				|| !((String) request.getSession().getAttribute("loggedIn")).equals("employer")) {
 			return new ResponseEntity<ControllerError>(
 					new ControllerError(HttpStatus.FORBIDDEN.value(), "Employer not logged in"), HttpStatus.FORBIDDEN);
 		}
 
-		Company company = compRepo.findOne(companyId);
+		Company company = compRepo.findByEmailid(companyEmail);
 		if (company == null) {
 			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
-					"Company with id " + String.valueOf(companyId) + " Not found"), HttpStatus.NOT_FOUND);
+					"Company with emailid " + companyEmail + " Not found"), HttpStatus.NOT_FOUND);
 		}
 
 		String body = httpEntity.getBody();
@@ -274,14 +271,11 @@ public class OtherController {
 		JsonElement jelem = gson.fromJson(body, JsonElement.class);
 		JsonObject jobj = jelem.getAsJsonObject();
 
-		JsonElement emailid = jobj.get("Email ID");
 		JsonElement name = jobj.get("Company Name");
 		JsonElement website = jobj.get("Website");
 		JsonElement address = jobj.get("Address_Headquarters");
 		JsonElement description = jobj.get("Description");
 		JsonElement logo_image = jobj.get("Logo_Image_URL");
-		if (emailid != null)
-			company.setEmailid(emailid.getAsString());
 		if (name != null)
 			company.setName(name.getAsString());
 		if (website != null)

@@ -57,10 +57,10 @@ public class WebController {
 		return "Welcome to your personal Job Tracker.";
 	}
 
-
 	// Job seeker sign up
 	@RequestMapping(value = "/users/create", method = { RequestMethod.POST })
-	public ResponseEntity<?> createUser(HttpServletRequest request, HttpEntity<String> httpEntity) throws UnsupportedEncodingException {
+	public ResponseEntity<?> createUser(HttpServletRequest request, HttpEntity<String> httpEntity)
+			throws UnsupportedEncodingException {
 		request.setCharacterEncoding("UTF-8");
 		String body = httpEntity.getBody();
 
@@ -71,9 +71,9 @@ public class WebController {
 		String password = jobj.get("password").getAsString();
 		String emailid = jobj.get("emailID").getAsString();
 
-		if(username == null || password == null || emailid == null){
-			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.BAD_REQUEST.value(),
-					"Insufficient data"), HttpStatus.BAD_REQUEST);
+		if (username == null || password == null || emailid == null) {
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.BAD_REQUEST.value(), "Insufficient data"), HttpStatus.BAD_REQUEST);
 		}
 		User user = userRepo.findByEmailid(emailid);
 		Company company = compRepo.findByEmailid(emailid);
@@ -90,25 +90,27 @@ public class WebController {
 		}
 		Random rand = new Random();
 		String code = String.format("%04d", rand.nextInt(10000));
-		user = new User(username, emailid, password, code); // need to encrypt password
+		user = new User(username, emailid, password, code); // need to encrypt
+															// password
 
 		userRepo.save(user);
 
 		request.getSession().setAttribute("loggedIn", "user");
 		request.getSession().setAttribute("email", emailid);
 
-		sendEmail(emailid, "verification code",
-				"your verification code is " + user.getVerificationcode());
+		sendEmail(emailid, "verification code", "your verification code is " + user.getVerificationcode());
 		String msg = "User with id " + user.getUserid() + " is created successfully. Verification Pending....";
-		return new ResponseEntity<String>(msg, HttpStatus.CREATED); // need to send an
-																// email
-																// notification
-																// as well.
+		return new ResponseEntity<String>(msg, HttpStatus.CREATED); // need to
+																	// send an
+		// email
+		// notification
+		// as well.
 	}
 
 	// job seeker & employer verification
 	@RequestMapping(value = "/users/verify", method = { RequestMethod.POST })
-	public ResponseEntity<?> verifyUser(HttpServletRequest request, HttpEntity<String> httpEntity) throws UnsupportedEncodingException{
+	public ResponseEntity<?> verifyUser(HttpServletRequest request, HttpEntity<String> httpEntity)
+			throws UnsupportedEncodingException {
 		request.setCharacterEncoding("UTF-8");
 		String body = httpEntity.getBody();
 
@@ -117,7 +119,7 @@ public class WebController {
 		JsonObject jobj = jelem.getAsJsonObject();
 		String verificationCode = jobj.get("verificationCode").getAsString();
 
-		//get email id from the session
+		// get email id from the session
 		String emailid = (String) request.getSession().getAttribute("email");
 
 		User user = userRepo.findByEmailid(emailid);
@@ -126,8 +128,7 @@ public class WebController {
 			if (!user.getVerificationcode().equals(verificationCode)) {
 				return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.UNAUTHORIZED.value(),
 						"Entered verification code does not match. Try Again"), HttpStatus.UNAUTHORIZED);
-			}
-			else{
+			} else {
 				user.setStatus(true);
 				msg = "User with id " + user.getEmailid() + " is verified successfully";
 				sendEmail(emailid, "Welcome to the site", "you account has been verified successfully.");
@@ -138,12 +139,12 @@ public class WebController {
 				if (!company.getVerificationcode().equals(verificationCode)) {
 					return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.UNAUTHORIZED.value(),
 							"Entered verification code does not match. Try Again"), HttpStatus.UNAUTHORIZED);
+				} else {
+					company.setStatus(true);
+					msg = "User with id " + company.getEmailid() + " is verified successfully";
+					sendEmail("anubha.mandal@sjsu.edu", "Welcome to the site",
+							"you account has been created successfully.");
 				}
-			 else {
-				company.setStatus(true);
-				msg = "User with id " + company.getEmailid() + " is verified successfully";
-				sendEmail("anubha.mandal@sjsu.edu", "Welcome to the site", "you account has been created successfully.");
-			}
 			}
 		}
 		return new ResponseEntity<>(msg, HttpStatus.OK);
@@ -152,10 +153,8 @@ public class WebController {
 	// Employer sign up
 	@RequestMapping(value = "/employers/create", method = { RequestMethod.POST })
 
-
-
 	public ResponseEntity<?> createEmployer(HttpServletRequest request, HttpEntity<String> httpEntity)
-			throws UnsupportedEncodingException{
+			throws UnsupportedEncodingException {
 
 		request.setCharacterEncoding("UTF-8");
 		String body = httpEntity.getBody();
@@ -171,28 +170,32 @@ public class WebController {
 		String description = jobj.get("Description").getAsString();
 		String logo = jobj.get("Logo_Image_URL").getAsString();
 
-		if(emailid == null || password == null || companyname == null){
-			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.BAD_REQUEST.value(),
-					"Insufficient data"), HttpStatus.BAD_REQUEST);
+		if (emailid == null || password == null || companyname == null) {
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.BAD_REQUEST.value(), "Insufficient data"), HttpStatus.BAD_REQUEST);
 		}
 
 		User user = userRepo.findByEmailid(emailid);
 		Company company = compRepo.findByEmailid(emailid);
-		if( user != null || company !=null)
-		{
-			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.BAD_REQUEST.value(),
-					"Emailid with " +emailid+ " is already registered, try logging in."), HttpStatus.BAD_REQUEST);
+		if (user != null || company != null) {
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.BAD_REQUEST.value(),
+							"Emailid with " + emailid + " is already registered, try logging in."),
+					HttpStatus.BAD_REQUEST);
 		}
 		user = userRepo.findByUsername(companyname);
 		company = compRepo.findByName(companyname);
-		if( user != null || company != null)
-		{
-			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.BAD_REQUEST.value(),
-					"Name already registered"), HttpStatus.BAD_REQUEST);
+		if (user != null || company != null) {
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.BAD_REQUEST.value(), "Name already registered"),
+					HttpStatus.BAD_REQUEST);
 		}
 		Random rand = new Random();
 		String code = String.format("%04d", rand.nextInt(10000));
-		company = new Company(companyname, emailid, password, website, address, description, logo, code);      // need to encrypt password
+		company = new Company(companyname, emailid, password, website, address, description, logo, code); // need
+																											// to
+																											// encrypt
+																											// password
 		compRepo.save(company);
 
 		request.getSession().setAttribute("loggedIn", "employer");
@@ -200,7 +203,10 @@ public class WebController {
 
 		sendEmail(emailid, "verification code", "your verification code is " + company.getVerificationcode());
 		String msg = "Employer with id " + company.getCompanyid() + " is created successfully";
-		return new ResponseEntity<>(msg, HttpStatus.CREATED); 						// need to send an email notification as well.
+		return new ResponseEntity<>(msg, HttpStatus.CREATED); // need to send an
+																// email
+																// notification
+																// as well.
 	}
 
 	// Job seeker profile create -- should be same for update as well
@@ -227,7 +233,7 @@ public class WebController {
 		Profile profile = profileRepo.findOne(userid);
 		if (profile == null) {
 			// List<String> skillList = Arrays.asList(skills.split("\\,"));
-			//TODO: check if verified
+			// TODO: check if verified
 			profile = new Profile(userid, firstname, lastname, picture, intro, workex, education, skills, phone);
 			profileRepo.save(profile);
 		} else {
@@ -254,7 +260,7 @@ public class WebController {
 					new ControllerError(HttpStatus.NOT_FOUND.value(), "Company with id " + companyid + "not found"),
 					HttpStatus.NOT_FOUND);
 		}
-		//TODO: check if verified
+		// TODO: check if verified
 		Job job = new Job(job_title, skills, desc, location, salary, status, company);
 		jobRepo.save(job);
 
@@ -280,43 +286,43 @@ public class WebController {
 	}
 
 	// Job search by job seeker
-	@RequestMapping(value = "/jobs/search/{searchTerm}/{companyName}/{location}/{salaryRange}", method = { RequestMethod.GET })
+	@RequestMapping(value = "/jobs/search/{searchTerm}/{companyName}/{location}/{salaryRange}", method = {
+			RequestMethod.GET })
 	public ResponseEntity<?> searchJobUser(HttpServletRequest request, @PathVariable("searchTerm") String freeText,
 			@PathVariable("companyName") String companyname, @PathVariable("location") String location,
-			@PathVariable("salaryRange") int salary)
-			throws UnsupportedEncodingException{
+			@PathVariable("salaryRange") int salary) throws UnsupportedEncodingException {
 
 		List<Job> freeList = new ArrayList<Job>();
 		List<Job> compList = new ArrayList<Job>();
 		List<Job> locList = new ArrayList<Job>();
 		List<Job> salList = new ArrayList<Job>();
-		List<Job> res_list = new ArrayList<Job>();			//Final output list
+		List<Job> res_list = new ArrayList<Job>(); // Final output list
 
 		boolean freeFlag = false;
 		boolean compFlag = false;
 		boolean locFlag = false;
 		boolean salFlag = false;
 
-		if(!freeText.equals("null")){
+		if (!freeText.equals("null")) {
 			freeList = getFreeTextJobs(freeText);
 			freeFlag = true;
 			res_list = freeList;
 		}
-		if(!companyname.equals("null")){
+		if (!companyname.equals("null")) {
 			compList = getCompanyNameJobs(companyname);
 			compFlag = true;
 			if (compList.size() > res_list.size()) {
 				res_list = compList;
 			}
 		}
-		if(!location.equals("null")){
+		if (!location.equals("null")) {
 			locList = getLocationJobs(location);
 			locFlag = true;
 			if (locList.size() > res_list.size()) {
 				res_list = locList;
 			}
 		}
-		if(salary != 0){
+		if (salary != 0) {
 			salList = getSalaryJobs(salary);
 			salFlag = true;
 			if (salList.size() > res_list.size()) {
@@ -332,9 +338,9 @@ public class WebController {
 		if (salFlag)
 			res_list = my_intersect(res_list, salList);
 
-		if(res_list.isEmpty()){
-			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
-					"No job match."), HttpStatus.NOT_FOUND);
+		if (res_list.isEmpty()) {
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.NOT_FOUND.value(), "No job match."), HttpStatus.NOT_FOUND);
 		}
 		ResponseEntity<List<Job>> response = new ResponseEntity<List<Job>>(res_list, HttpStatus.OK);
 		return response;
@@ -342,36 +348,38 @@ public class WebController {
 
 	public List<Job> getFreeTextJobs(String freeText) {
 		List<String> inputList = Arrays.asList(freeText.split(","));
-		List<Job> res = new ArrayList<Job>();			// final output list
+		List<Job> res = new ArrayList<Job>(); // final output list
 		// Search in job title
-		for (String l : inputList){
+		for (String l : inputList) {
 			List<Job> tmp = new ArrayList<>(jobRepo.findByStatusAndJobtitleContaining(JobStatus.OPEN, l));
 			tmp.removeAll(res);
 			res.addAll(tmp);
 		}
 		// Search in location
-		for (String l : inputList){
+		for (String l : inputList) {
 			List<Job> tmp = new ArrayList<>(jobRepo.findByStatusAndLocationContaining(JobStatus.OPEN, l));
 			tmp.removeAll(res);
 			res.addAll(tmp);
 		}
 		// Search in skills
-		for (String l : inputList){
+		for (String l : inputList) {
 			List<Job> tmp = new ArrayList<>(jobRepo.findByStatusAndSkillContaining(JobStatus.OPEN, l));
 			tmp.removeAll(res);
 			res.addAll(tmp);
 		}
 		// Search in company Name
-		for (String l : inputList){
-		//	Company company = compRepo.findByNameContaining(l);
+		for (String l : inputList) {
+			// Company company = compRepo.findByNameContaining(l);
 			Company company = compRepo.findByName(l);
-		//	List<Job> tmp = new ArrayList<>(jobRepo.findByStatusAndCompanyContaining(JobStatus.OPEN, company));
+			// List<Job> tmp = new
+			// ArrayList<>(jobRepo.findByStatusAndCompanyContaining(JobStatus.OPEN,
+			// company));
 			List<Job> tmp = new ArrayList<>(jobRepo.findByStatusAndCompany(JobStatus.OPEN, company));
 			tmp.removeAll(res);
 			res.addAll(tmp);
 		}
 		// Search in description
-		for (String l : inputList){
+		for (String l : inputList) {
 			List<Job> tmp = new ArrayList<>(jobRepo.findByStatusAndDescriptionContaining(JobStatus.OPEN, l));
 			tmp.removeAll(res);
 			res.addAll(tmp);
@@ -381,9 +389,9 @@ public class WebController {
 
 	public List<Job> getCompanyNameJobs(String companyname) {
 		List<String> inputList = Arrays.asList(companyname.split(","));
-		List<Job> res = new ArrayList<Job>();			// final output list
+		List<Job> res = new ArrayList<Job>(); // final output list
 		// Search in company Name
-		for (String l : inputList){
+		for (String l : inputList) {
 			Company company = compRepo.findByName(l);
 			List<Job> tmp = new ArrayList<>(jobRepo.findByStatusAndCompany(JobStatus.OPEN, company));
 			res.addAll(tmp);
@@ -393,9 +401,9 @@ public class WebController {
 
 	public List<Job> getLocationJobs(String location) {
 		List<String> inputList = Arrays.asList(location.split(","));
-		List<Job> res = new ArrayList<Job>();			// final output list
+		List<Job> res = new ArrayList<Job>(); // final output list
 		// Search in Locations
-		for (String l : inputList){
+		for (String l : inputList) {
 			List<Job> tmp = new ArrayList<>(jobRepo.findByStatusAndLocationContaining(JobStatus.OPEN, l));
 			res.addAll(tmp);
 		}
@@ -404,7 +412,9 @@ public class WebController {
 
 	public List<Job> getSalaryJobs(int salary) {
 		// Search in salary
-		List<Job> res = new ArrayList<>(jobRepo.findByStatusAndSalaryGreaterThan(JobStatus.OPEN, salary));			// final output list
+		List<Job> res = new ArrayList<>(jobRepo.findByStatusAndSalaryGreaterThan(JobStatus.OPEN, salary)); // final
+																											// output
+																											// list
 		return res;
 	}
 
@@ -417,4 +427,14 @@ public class WebController {
 		}
 	}
 
+	public static List<Job> my_intersect(List<Job> a, List<Job> b) {
+		List<Job> result = new ArrayList<Job>();
+		for (Job j : a) {
+			for (Job v : b) {
+				if (v.getJobid() == j.getJobid())
+					result.add(j);
+			}
+		}
+		return result;
+	}
 }
