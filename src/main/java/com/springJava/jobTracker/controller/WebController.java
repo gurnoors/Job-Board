@@ -39,7 +39,7 @@ import com.springJava.jobTracker.repo.UserRepo;
 @Transactional(propagation = Propagation.REQUIRES_NEW)
 public class WebController {
 	Gson gson = new GsonBuilder().setPrettyPrinting().create();
-	
+
 	@Autowired
 	JobRepo jobRepo;
 	@Autowired
@@ -152,7 +152,7 @@ public class WebController {
 	// Employer sign up
 	@RequestMapping(value = "/employers/create", method = { RequestMethod.POST })
 
-		
+
 
 	public ResponseEntity<?> createEmployer(HttpServletRequest request, HttpEntity<String> httpEntity)
 			throws UnsupportedEncodingException{
@@ -279,37 +279,142 @@ public class WebController {
 		return new ResponseEntity<>(msg, HttpStatus.OK);
 	}
 
-	// Job search by user
-	@RequestMapping(value = "/jobs", method = { RequestMethod.GET })
-	public ResponseEntity<?> searchJobUser(@RequestParam(value = "freeText", defaultValue = "null") String freeText,
-			@RequestParam(value = "company", defaultValue = "null") String company,
-			@RequestParam(value = "location", defaultValue = "null") String location,
-			@RequestParam(value = "salary", defaultValue = "null") float salary) {
+	// Job search by job seeker
+	@RequestMapping(value = "/jobs/search/{searchTerm}/{companyName}/{location}/{salaryRange}", method = { RequestMethod.GET })
+	public ResponseEntity<?> searchJobUser(HttpServletRequest request, @PathVariable("searchTerm") String freeText,
+			@PathVariable("companyName") String companyname, @PathVariable("location") String location,
+			@PathVariable("salaryRange") int salary)
+			throws UnsupportedEncodingException{
+
 		List<Job> freeList = new ArrayList<Job>();
 		List<Job> compList = new ArrayList<Job>();
 		List<Job> locList = new ArrayList<Job>();
 		List<Job> salList = new ArrayList<Job>();
-		List<Job> res_list = new ArrayList<Job>();
+		List<Job> res_list = new ArrayList<Job>();			//Final output list
 
 		boolean freeFlag = false;
 		boolean compFlag = false;
 		boolean locFlag = false;
 		boolean salFlag = false;
-		return null;
+
+		if(!freeText.equals("null")){
+			freeList = getFreeTextJobs(freeText);
+			freeFlag = true;
+			res_list = freeList;
+		}
+		if(!companyname.equals("null")){
+			compList = getCompanyNameJobs(companyname);
+			compFlag = true;
+			if (compList.size() > res_list.size()) {
+				res_list = compList;
+			}
+		}
+		if(!location.equals("null")){
+			locList = getLocationJobs(location);
+			locFlag = true;
+			if (locList.size() > res_list.size()) {
+				res_list = locList;
+			}
+		}
+		if(salary != 0){
+			salList = getSalaryJobs(salary);
+			salFlag = true;
+			if (salList.size() > res_list.size()) {
+				res_list = salList;
+			}
+		}
+		if (freeFlag)
+			res_list = my_intersect(res_list, freeList);
+		if (compFlag)
+			res_list = my_intersect(res_list, compList);
+		if (locFlag)
+			res_list = my_intersect(res_list, locList);
+		if (salFlag)
+			res_list = my_intersect(res_list, salList);
+
+		if(res_list.isEmpty()){
+			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
+					"No job match."), HttpStatus.NOT_FOUND);
+		}
+		ResponseEntity<List<Job>> response = new ResponseEntity<List<Job>>(res_list, HttpStatus.OK);
+		return response;
+	}
+
+	public List<Job> getFreeTextJobs(String freeText) {
+		List<String> inputList = Arrays.asList(freeText.split(","));
+		List<Job> res = new ArrayList<Job>();			// final output list
+		// Search in job title
+		for (String l : inputList){
+			List<Job> tmp = new ArrayList<>(jobRepo.findByStatusAndJobtitleContaining(JobStatus.OPEN, l));
+			tmp.removeAll(res);
+			res.addAll(tmp);
+		}
+		// Search in location
+		for (String l : inputList){
+			List<Job> tmp = new ArrayList<>(jobRepo.findByStatusAndLocationContaining(JobStatus.OPEN, l));
+			tmp.removeAll(res);
+			res.addAll(tmp);
+		}
+		// Search in skills
+		for (String l : inputList){
+			List<Job> tmp = new ArrayList<>(jobRepo.findByStatusAndSkillContaining(JobStatus.OPEN, l));
+			tmp.removeAll(res);
+			res.addAll(tmp);
+		}
+		// Search in company Name
+		for (String l : inputList){
+		//	Company company = compRepo.findByNameContaining(l);
+			Company company = compRepo.findByName(l);
+		//	List<Job> tmp = new ArrayList<>(jobRepo.findByStatusAndCompanyContaining(JobStatus.OPEN, company));
+			List<Job> tmp = new ArrayList<>(jobRepo.findByStatusAndCompany(JobStatus.OPEN, company));
+			tmp.removeAll(res);
+			res.addAll(tmp);
+		}
+		// Search in description
+		for (String l : inputList){
+			List<Job> tmp = new ArrayList<>(jobRepo.findByStatusAndDescriptionContaining(JobStatus.OPEN, l));
+			tmp.removeAll(res);
+			res.addAll(tmp);
+		}
+		return res;
+	}
+
+	public List<Job> getCompanyNameJobs(String companyname) {
+		List<String> inputList = Arrays.asList(companyname.split(","));
+		List<Job> res = new ArrayList<Job>();			// final output list
+		// Search in company Name
+		for (String l : inputList){
+			Company company = compRepo.findByName(l);
+			List<Job> tmp = new ArrayList<>(jobRepo.findByStatusAndCompany(JobStatus.OPEN, company));
+			res.addAll(tmp);
+		}
+		return res;
+	}
+
+	public List<Job> getLocationJobs(String location) {
+		List<String> inputList = Arrays.asList(location.split(","));
+		List<Job> res = new ArrayList<Job>();			// final output list
+		// Search in Locations
+		for (String l : inputList){
+			List<Job> tmp = new ArrayList<>(jobRepo.findByStatusAndLocationContaining(JobStatus.OPEN, l));
+			res.addAll(tmp);
+		}
+		return res;
+	}
+
+	public List<Job> getSalaryJobs(int salary) {
+		// Search in salary
+		List<Job> res = new ArrayList<>(jobRepo.findByStatusAndSalaryGreaterThan(JobStatus.OPEN, salary));			// final output list
+		return res;
 	}
 
 	public void sendEmail(String to, String subject, String text) {
 		try {
 			String from = "cmpe275.project.grp36@gmail.com";
-			springEmailService.send(from, to, subject, text);// , inputStream,
-																// fileName,
-																// mimeType);
-
-			// Notification.show("Email sent");
+			springEmailService.send(from, to, subject, text);
 		} catch (Exception e) {
 			e.printStackTrace();
-			// Notification.show("Error sending the email",
-			// Notification.Type.ERROR_MESSAGE);
 		}
 	}
+
 }
