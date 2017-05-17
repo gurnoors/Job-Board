@@ -13,23 +13,23 @@ import javax.persistence.Table;
 @Entity
 @Table(name="application")
 public class Application {
-	
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	@Column(unique = true, nullable = false)
 	private Long applicationid;
-	
+
 	@OneToOne(fetch=FetchType.LAZY)
 	@JoinColumn(name="userid")
 	private User user;
-	
+
 	@OneToOne(fetch=FetchType.LAZY)
 	@JoinColumn(name="jobid")
 	private Job job;
-	
+
 	private ApplicationType type; // (interested/ applied)
 	private ApplicationStatus status;
-	
+
 	public Application( User user, Job job, ApplicationType type, ApplicationStatus status) {
 		super();
 		this.user = user;
@@ -68,10 +68,4 @@ public class Application {
 	public void setStatus(ApplicationStatus status) {
 		this.status = status;
 	}
-	
-	
-	
-	
-	
-	
 }
