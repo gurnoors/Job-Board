@@ -1,11 +1,15 @@
 package com.springJava.jobTracker.controller;
 
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Propagation;
@@ -16,6 +20,10 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.springJava.jobTracker.model.Company;
 import com.springJava.jobTracker.model.Job;
 import com.springJava.jobTracker.model.JobStatus;
@@ -30,7 +38,8 @@ import com.springJava.jobTracker.repo.UserRepo;
 @RestController
 @Transactional(propagation = Propagation.REQUIRES_NEW)
 public class WebController {
-
+	Gson gson = new GsonBuilder().setPrettyPrinting().create();
+	
 	@Autowired
 	JobRepo jobRepo;
 	@Autowired

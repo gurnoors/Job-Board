@@ -5,6 +5,7 @@ import java.io.IOException;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.mockito.exceptions.PrintableInvocation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
@@ -20,6 +21,7 @@ import com.springJava.jobTracker.model.ApplicationStatus;
 import com.springJava.jobTracker.model.ApplicationType;
 import com.springJava.jobTracker.model.Company;
 import com.springJava.jobTracker.model.Job;
+import com.springJava.jobTracker.model.Profile;
 import com.springJava.jobTracker.model.User;
 import com.springJava.jobTracker.repo.ApplicationRepo;
 import com.springJava.jobTracker.repo.CompanyRepo;
@@ -78,6 +80,15 @@ public class OtherController {
 		// TODO: check if verified
 		if (user != null) {
 			if (pwd.equals(user.getPassword())) {
+				if (!user.isStatus()) { // did not verify the email
+					/*
+					 * For testing, do: update table user as u set u.status=1;
+					 */
+					return new ResponseEntity<ControllerError>(
+							new ControllerError(HttpStatus.FORBIDDEN.value(), "User not verified"),
+							HttpStatus.FORBIDDEN);
+				}
+
 				request.getSession().setAttribute("loggedIn", "user");
 				request.getSession().setAttribute("email", user.getEmailid());
 				responseStatus = HttpStatus.OK;
@@ -88,6 +99,12 @@ public class OtherController {
 			Company company = compRepo.findByEmailid(emailid);
 			if (company != null) {
 				if (pwd.equals(company.getPassword())) {
+					if (!company.isStatus()) {
+						return new ResponseEntity<ControllerError>(
+								new ControllerError(HttpStatus.FORBIDDEN.value(), "Employer not verified"),
+								HttpStatus.FORBIDDEN);
+					}
+
 					request.getSession().setAttribute("loggedIn", "employer");
 					request.getSession().setAttribute("email", company.getEmailid());
 					responseStatus = HttpStatus.OK;
@@ -100,6 +117,25 @@ public class OtherController {
 		}
 		ResponseEntity<String> responseEntity = new ResponseEntity<String>(responseStatus);
 		return responseEntity;
+	}
+
+	/**
+	 * LOGOUT
+	 * 
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping(value = "/logout", method = { RequestMethod.GET })
+	@ResponseBody
+	public ResponseEntity<?> logout(HttpServletRequest request) {
+		if (request.getSession().getAttribute("loggedIn") == null) {
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.OK.value(), "Logged out. You were not logged in though ;P"),
+					HttpStatus.OK);
+		}
+		request.getSession().setAttribute("loggedIn", null);
+		request.getSession().setAttribute("email", null);
+		return new ResponseEntity<>(HttpStatus.OK);
 	}
 
 	/**
@@ -119,8 +155,7 @@ public class OtherController {
 	}
 
 	/**
-	 * Body expects param: Email
-	 * 
+	 * apply job
 	 * 
 	 * @param request
 	 * @param jobId
@@ -131,13 +166,20 @@ public class OtherController {
 	public ResponseEntity<?> applyForJob(HttpServletRequest request, @PathVariable Long jobId,
 			HttpEntity<String> httpEntity) {
 		Job job = jobRepo.findOne(jobId);
+		// sanity checks
+		if (!((String) request.getSession().getAttribute("loggedIn")).equals("user")) {
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.FORBIDDEN.value(), "User not logged in"), HttpStatus.FORBIDDEN);
+		}
 
-		String body = httpEntity.getBody();
 		// read body
+		String body = httpEntity.getBody();
 		JsonElement jelem = gson.fromJson(body, JsonElement.class);
 		JsonObject jobj = jelem.getAsJsonObject();
-		String emailid = jobj.get("Email").getAsString();
+		String emailid = (String) request.getSession().getAttribute("email");
+		System.out.println("inside apply : Email ---> " + emailid);
 
+		// sanity checks
 		if (job == null) {
 			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
 					"Job with id " + String.valueOf(jobId) + " Not found"), HttpStatus.NOT_FOUND);
@@ -148,8 +190,32 @@ public class OtherController {
 					new ControllerError(HttpStatus.NOT_FOUND.value(), "User with email " + emailid + " Not found"),
 					HttpStatus.NOT_FOUND);
 		}
+		Profile profile = profileRepo.findOne(user.getUserid());
+		if (profile == null) {
+			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.FORBIDDEN.value(),
+					"Please create yur profile before applying for a job"), HttpStatus.FORBIDDEN);
+		}
+
 		ApplicationStatus status = ApplicationStatus.PENDING;
-		ApplicationType type = ApplicationType.APPLIED;
+
+		ApplicationType type = null;
+		if (jobj.get("applicationType") != null) {
+			switch (jobj.get("applicationType").getAsString()) {
+			case "interested":
+				type = ApplicationType.INTERESTED;
+				break;
+			case "applied":
+				type = ApplicationType.APPLIED;
+				break;
+			default:
+				return new ResponseEntity<ControllerError>(
+						new ControllerError(HttpStatus.BAD_REQUEST.value(),
+								"\"applicationType\" can be either \"interested\" or \"applied\""),
+						HttpStatus.BAD_REQUEST);
+			}
+		} else {
+			type = ApplicationType.APPLIED;
+		}
 		Application application = new Application(user, job, type, status);
 
 		appRepo.save(application);
@@ -171,6 +237,12 @@ public class OtherController {
 	@ResponseBody
 	public ResponseEntity<?> updateCompany(HttpServletRequest request, @PathVariable Long companyId,
 			HttpEntity<String> httpEntity) {
+
+		if (!((String) request.getSession().getAttribute("loggedIn")).equals("company")) {
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.FORBIDDEN.value(), "Employer not logged in"), HttpStatus.FORBIDDEN);
+		}
+
 		Company company = compRepo.findOne(companyId);
 		if (company == null) {
 			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
@@ -204,5 +276,11 @@ public class OtherController {
 		compRepo.save(company);
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
+	
+//	@RequestMapping(value="/employer/jobs", method={RequestMethod.GET})
+//	@ResponseBody
+//	public ResponseEntity<?> getAllJobsForEmployer() {
+//		
+//	}
 
 }
