@@ -2,6 +2,7 @@ package com.springJava.jobTracker.controller;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.hibernate.sql.Update;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -97,12 +98,10 @@ public class OtherController {
 		return new ResponseEntity<Job>(job, HttpStatus.OK);
 	}
 
-	
 	/**
-	 * Body expects:
-	 *  
-	 *  
-	 *  
+	 * Body expects param: Email
+	 * 
+	 * 
 	 * @param request
 	 * @param jobId
 	 * @return
@@ -115,8 +114,11 @@ public class OtherController {
 			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
 					"Job with id " + String.valueOf(jobId) + " Not found"), HttpStatus.NOT_FOUND);
 		}
-
 		User user = userRepo.findByEmailid(request.getParameter("Email"));
+		if (user == null) {
+			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
+					"User with email " + request.getParameter("Email") + " Not found"), HttpStatus.NOT_FOUND);
+		}
 		ApplicationStatus status = ApplicationStatus.PENDING;
 		ApplicationType type = ApplicationType.APPLIED;
 		Application application = new Application(user, job, type, status);
@@ -124,23 +126,57 @@ public class OtherController {
 		appRepo.save(application);
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 
+	/**
+	 * 
+	 * 10) Employer details Update [PUT request]
+	 * Request Body
+	 * 
+	 * { Email ID: “”, Company Name: “”, Website:””, Address_Headquarters: ””,
+	 * Description:””, Logo_Image_URL : ”” }
+	 * 
+	 * @param request
+	 * @param companyId
+	 * @return
+	 */
+	@RequestMapping(value = "/employers/{companyId}/update", method = { RequestMethod.PUT })
+	@ResponseBody
+	public ResponseEntity<?> updateCompany(HttpServletRequest request, @PathVariable Long companyId) {
+		Company company = compRepo.findOne(companyId);
+		if (company == null) {
+			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
+					"Company with id " + String.valueOf(companyId) + " Not found"), HttpStatus.NOT_FOUND);
+		}
+		String emailid = request.getParameter("Email ID");
+		String name = request.getParameter("Company Name");
+		String website = request.getParameter("Website");
+		String address = request.getParameter("Address_Headquarters");
+		String description = request.getParameter("Description");
+		String logo_image = request.getParameter("Logo_Image_URL");
+		if(emailid != null)
+			company.setEmailid(emailid);
+		if(name != null)
+			company.setName(name);
+		if(website != null)
+			company.setWebsite(website);
+		if(address != null)
+			company.setAddress(address);
+		if(description != null)
+			company.setDescription(description);
+		if(logo_image != null)
+			company.setLogo_image(logo_image);
+		
+		compRepo.save(company);
+		return new ResponseEntity<>(HttpStatus.OK);
+	}
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
 }
