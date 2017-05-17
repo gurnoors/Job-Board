@@ -151,6 +151,9 @@ public class WebController {
 
 	// Employer sign up
 	@RequestMapping(value = "/employers/create", method = { RequestMethod.POST })
+
+		
+
 	public ResponseEntity<?> createEmployer(HttpServletRequest request, HttpEntity<String> httpEntity)
 			throws UnsupportedEncodingException{
 
@@ -172,6 +175,7 @@ public class WebController {
 			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.BAD_REQUEST.value(),
 					"Insufficient data"), HttpStatus.BAD_REQUEST);
 		}
+
 		User user = userRepo.findByEmailid(emailid);
 		Company company = compRepo.findByEmailid(emailid);
 		if( user != null || company !=null)
