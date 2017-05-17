@@ -1,5 +1,6 @@
 package com.springJava.jobTracker.model;
 
+import java.io.Serializable;
 import java.util.List;
 
 import javax.persistence.Column;
@@ -13,10 +14,17 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 @Entity
 @Table(name="job")
-public class Job {
+public class Job implements Serializable{
 	
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 5615706021181317125L;
+
 	@Id
 	@GeneratedValue(strategy=GenerationType.AUTO)
 	@Column(unique = true, nullable = false)
@@ -35,6 +43,7 @@ public class Job {
 	
 	@ManyToOne(fetch=FetchType.EAGER)
 	@JoinColumn(name="companyid")
+	@JsonManagedReference
 	private Company company;
 	
 	//public Job(String jobtitle, List<String> skill, String description, String location,

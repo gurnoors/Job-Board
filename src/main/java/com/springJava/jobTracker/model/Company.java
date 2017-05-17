@@ -13,6 +13,8 @@ import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 @Entity
 @Table(name="company")
 public class Company {
@@ -39,6 +41,7 @@ public class Company {
 	private boolean status = false;
 	
 	@OneToMany(mappedBy = "company")
+	@JsonBackReference
 	private List<Job> jobs;
 
 	public Company() {

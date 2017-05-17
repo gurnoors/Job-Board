@@ -30,9 +30,8 @@ public class Application {
 	private ApplicationType type; // (interested/ applied)
 	private ApplicationStatus status;
 	
-	public Application(Long applicationid, User user, Job job, ApplicationType type, ApplicationStatus status) {
+	public Application( User user, Job job, ApplicationType type, ApplicationStatus status) {
 		super();
-		this.applicationid = applicationid;
 		this.user = user;
 		this.job = job;
 		this.type = type;
