@@ -238,17 +238,29 @@ function login(e) {
 
     }
 
-    ajaxCall("POST", "/login", loginRequestObj, function (status, body) {
+    ajaxCall("POST", "/loginFoo", loginRequestObj, function (status, body) {
         if (status == 200) {
 
-            var responseObj = JSON.parse(body);
-            if (responseObj.message === "wrongcredentials") {
-                window.location.href = "/index.html?errorMessage=" + responseObj.message;
-                return;
-            }
             localStorage.setItem("userEmail", loginRequestObj["email"]);
             window.location.href = "/Dashboard.html";
-        } else {
+        }
+        
+        else if (status == 403) {
+       
+     
+                 window.location.href = "/index.html?errorMessage=wrongcredentials";
+                 return;
+             }
+        
+        else if (status == 404) {
+        	
+            
+            window.location.href = "/index.html?errorMessage=emailIdNotFound";
+            return;
+        }
+        
+    
+        else {
             window.location.href = "/index.html";
         }
     });
