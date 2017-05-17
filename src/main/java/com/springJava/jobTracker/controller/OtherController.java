@@ -2,6 +2,7 @@ package com.springJava.jobTracker.controller;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -238,7 +239,7 @@ public class OtherController {
 	public ResponseEntity<?> updateCompany(HttpServletRequest request, @PathVariable Long companyId,
 			HttpEntity<String> httpEntity) {
 
-		if (!((String) request.getSession().getAttribute("loggedIn")).equals("company")) {
+		if (!((String) request.getSession().getAttribute("loggedIn")).equals("employer")) {
 			return new ResponseEntity<ControllerError>(
 					new ControllerError(HttpStatus.FORBIDDEN.value(), "Employer not logged in"), HttpStatus.FORBIDDEN);
 		}
@@ -277,10 +278,28 @@ public class OtherController {
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
 	
-//	@RequestMapping(value="/employer/jobs", method={RequestMethod.GET})
-//	@ResponseBody
-//	public ResponseEntity<?> getAllJobsForEmployer() {
-//		
-//	}
+	/**
+	 * 12) get all jobs for an employer [GET request]
+	 * 
+	 * @param request
+	 * @return
+	 */
+	@RequestMapping(value="/employer/jobs", method={RequestMethod.GET})
+	@ResponseBody
+	public ResponseEntity<?> getAllJobsForEmployer(HttpServletRequest request) {
+		System.out.println("isLogged IN --> "+
+				(String) request.getSession().getAttribute("employer"));
+		System.out.println((String) request.getSession().getAttribute("email"));
+		if (!((String) request.getSession().getAttribute("loggedIn")).equals("employer")) {
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.FORBIDDEN.value(), "Employer not logged in"), HttpStatus.FORBIDDEN);
+		}
+		
+		String email = (String) request.getSession().getAttribute("email");
+		Company company = compRepo.findByEmailid(email);
+		List<Job> jobs = company.getJobs();
+		
+		return new ResponseEntity<List<Job>>(jobs, HttpStatus.OK);
+	}
 
 }
