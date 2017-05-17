@@ -39,51 +39,47 @@
         <div class="col-md-9 personal-info">
             <h3>Personal info</h3>
 
-            <form class="form-horizontal" role="form">
+            <form class="form-horizontal" name ="editProfile" id = "editProfile" onsubmit="editProfile(event)">
                 <div class="form-group">
                     <label class="col-lg-3 control-label">First name:</label>
                     <div class="col-lg-8">
-                        <input class="form-control" type="text" placeholder="Vignesh">
+                        <input class="form-control" id ="fName" name = "fName" type="text" placeholder="Vignesh">
                     </div>
                 </div>
                 <div class="form-group">
                     <label class="col-lg-3 control-label">Last name:</label>
                     <div class="col-lg-8">
-                        <input class="form-control" type="text" placeholder="Ramkumar">
+                        <input class="form-control" id ="lName" name = "lName" type="text" placeholder="Ramkumar">
                     </div>
                 </div>
                 <div class="form-group">
                     <label class="col-lg-3 control-label">Self Introduction</label>
                     <div class="col-lg-8">
-                        <input class="form-control" type="text" placeholder="Briefly describe yourself">
+                        <input class="form-control" id ="selfIntro" name = "selfIntro" type="text" placeholder="Briefly describe yourself">
                     </div>
                 </div>
                 <div class="form-group">
                     <label class="col-lg-3 control-label">Work Experience</label>
                     <div class="col-lg-8">
-                        <input class="form-control" type="text" placeholder="Describe your industry experience">
+                        <input class="form-control" id ="workEx" name = "workEx" type="text" placeholder="Describe your industry experience">
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label class="col-md-3 control-label">Education</label>
                     <div class="col-md-8">
-                        <input class="form-control" type="text" placeholder="Describe your education">
+                        <input class="form-control" id ="education" name = "education" type="text" placeholder="Describe your education">
                     </div>
                 </div>
                 <div class="form-group">
                     <label class="col-md-3 control-label">Skills</label>
                     <div class="col-md-8">
-                        <input class="form-control" type="text" placeholder="Describe your skills">
+                        <input class="form-control" id ="skills" name = "skills" type="text" placeholder="Describe your skills">
                     </div>
                 </div>
-                <div class="form-group">
-                    <label class="col-md-3 control-label"></label>
-                    <div class="col-md-8">
-                        <input type="button" class="btn btn-primary" value="Save Changes">
-                        <span></span>
-                        <input type="reset" class="btn btn-default" value="Cancel">
-                    </div>
+                <div class="form-group ">
+                    <button type="submit" id = "Register" class="btn btn-primary btn-lg login-button">Save Changes</button>
+                    <button type="reset" id = "Reset" class="btn btn-primary btn-lg  login-button">Reset</button>
                 </div>
             </form>
         </div>

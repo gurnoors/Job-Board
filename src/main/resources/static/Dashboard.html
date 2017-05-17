@@ -22,8 +22,8 @@
 </head>
 <body>
 <div class="container-full" style="width: 100%; ">
-    <div class="row main" class="main-login main-center">
-        <div class="panel-heading">
+    <div class="row">
+        <div class="col-md-12">
             <div class="panel-title text-center">
                 <h1 class="title"> User Dashboard </h1>
             </div>
@@ -39,7 +39,6 @@
                 <span style="font-size:30px;cursor:pointer" onclick="openNav()">&#9776;</span>
             </div>
         <div class="main-login main-center" >
-
             <form class="form-group" name ="searchForm" id = "loginForm" onsubmit="search(event)">
                 <div class="form-group">
                     <label for="FreeTextSearch" class="cols-sm-2 control-label">Free Text Search</label>
@@ -83,9 +82,15 @@
 
 
 
+
         </div>
         </div>
-    </div>
+        <div class="main-login" id = "searchJobResults" style="text-align: center">
+
+        </div>
+
+        </div>
+
 </div>
 </body>
 </html>

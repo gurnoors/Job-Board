@@ -46,7 +46,13 @@ function  verifyUser(e) {
                 return;
             }
 
+            var userType = localStorage.getItem("userType")
+
+            if(userType == "employer")
             window.location.href = "Dashboard.html";
+            else if (userType == "user")
+                window.location.href = "EmployerDashboard.html";
+
         } else {
             window.location.href = "UserVerification.html";
         }
@@ -103,7 +109,7 @@ function signup(e) {
     console.log(email.indexOf("@"));
 
     //do validation
-     if (Name === undefined || Name === "") {
+    if (Name === undefined || Name === "") {
         errorMessage = "Enter your last name."
         error.innerHTML = errorMessage;
         error.style.display = "block";
@@ -147,6 +153,10 @@ function signup(e) {
                 return;
             }
             localStorage.setItem("userEmail", loginRequestObj["email"]);
+
+            localStorage.setItem("userType","employer");
+
+
             window.location.href = "UserVerification.html";
         } else {
             window.location.href = "Company_SignUp.html";
@@ -242,24 +252,27 @@ function login(e) {
         if (status == 200) {
 
             localStorage.setItem("userEmail", loginRequestObj["email"]);
+
+
+
             window.location.href = "/Dashboard.html";
         }
-        
+
         else if (status == 403) {
-       
-     
-                 window.location.href = "/index.html?errorMessage=wrongcredentials";
-                 return;
-             }
-        
+
+
+            window.location.href = "/index.html?errorMessage=wrongcredentials";
+            return;
+        }
+
         else if (status == 404) {
-        	
-            
+
+
             window.location.href = "/index.html?errorMessage=emailIdNotFound";
             return;
         }
-        
-    
+
+
         else {
             window.location.href = "/index.html";
         }
@@ -271,17 +284,17 @@ function logout(e) {
 
     var url = "/user/logout";
 
-        var logoutRequestObj = {};
+    var logoutRequestObj = {};
 
-        ajaxCall("PUT", url, logoutRequestObj, function (status, body) {
-            if (status == 200) {
-                localStorage.setItem("userEmail", "");
-                window.location.href = "/CMPE275/index.html";
-            } else {
-                console.log("Logout not done : " + status);
-            }
-        });
-    }
+    ajaxCall("PUT", url, logoutRequestObj, function (status, body) {
+        if (status == 200) {
+            localStorage.setItem("userEmail", "");
+            window.location.href = "/index.html";
+        } else {
+            console.log("Logout not done : " + status);
+        }
+    });
+}
 
 
 

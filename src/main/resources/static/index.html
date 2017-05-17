@@ -31,15 +31,15 @@
             </div>
         </div>
 
-            
+
         <div class="main-login main-center" >
             <form class="form-horizontal" name ="loginForm" id = "loginForm" onsubmit="login(event)">
-                    <div id="error" style="display:none;color:red">
-                Invalid email or password. Please enter correct and email password.
-            </div>
-            <div id="error1" style="display: none;color:red">
-                Email Id not found. Sign up in our app.	
-            </div>
+                <div id="error" style="display:none;color:red">
+                    Invalid email or password. Please enter correct and email password.
+                </div>
+                <div id="error1" style="display: none;color:red">
+                    Email Id not found. Sign up in our app.
+                </div>
                 <div class="form-group">
                     <label for="email" class="cols-sm-2 control-label">Email address</label>
                     <div class="cols-sm-10">
@@ -63,17 +63,18 @@
                 <br>
             </form>
             <script>
+
                 var obj = getAllUrlParams(window.location.href);
                 console.log(JSON.stringify(obj));
                 if (obj["errorMessage"] === "wrongcredentials") {
                     document.getElementById("error").style.display = "block";
-                    
+
                 }
                 if (obj["errorMessage"] === "emailIdNotFound") {
                     document.getElementById("error1").style.display = "block";
                 }
-                
-                
+
+
             </script>
             <div class="cols-sm-10" onclick="navigateToUrl(event)">
                 <button type="button" id = "Company" value="Company_SignUp.html" class="btn btn-primary login-button">Sign up as an Employer</button>
