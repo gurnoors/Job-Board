@@ -250,20 +250,20 @@ public class OtherController {
 	 * @param companyId
 	 * @return
 	 */
-	@RequestMapping(value = "/employers/{companyEmail}/update", method = { RequestMethod.PUT })
+	@RequestMapping(value = "/employers/update", method = { RequestMethod.PUT })
 	@ResponseBody
-	public ResponseEntity<?> updateCompany(HttpServletRequest request, @PathVariable String companyEmail,
+	public ResponseEntity<?> updateCompany(HttpServletRequest request, 
 			HttpEntity<String> httpEntity) {
 		if (request.getSession().getAttribute("loggedIn") == null
 				|| !((String) request.getSession().getAttribute("loggedIn")).equals("employer")) {
 			return new ResponseEntity<ControllerError>(
 					new ControllerError(HttpStatus.FORBIDDEN.value(), "Employer not logged in"), HttpStatus.FORBIDDEN);
 		}
-
-		Company company = compRepo.findByEmailid(companyEmail);
+		String email = (String) request.getSession().getAttribute("email");
+		Company company = compRepo.findByEmailid(email);
 		if (company == null) {
 			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
-					"Company with emailid " + companyEmail + " Not found"), HttpStatus.NOT_FOUND);
+					"Company with emailid " + email + " Not found"), HttpStatus.NOT_FOUND);
 		}
 
 		String body = httpEntity.getBody();
