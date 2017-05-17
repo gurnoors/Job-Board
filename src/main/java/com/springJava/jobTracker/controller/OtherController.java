@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -30,6 +31,8 @@ import com.springJava.jobTracker.repo.JobRepo;
 import com.springJava.jobTracker.repo.ProfileRepo;
 import com.springJava.jobTracker.repo.UserRepo;
 
+import javassist.expr.NewArray;
+
 import javax.servlet.http.HttpServletRequest;
 
 import com.google.gson.Gson;
@@ -39,7 +42,8 @@ import com.google.gson.JsonObject;
 
 @RestController
 public class OtherController {
-	Gson gson = new GsonBuilder().setPrettyPrinting().create();
+	private static Gson gson = new GsonBuilder().setPrettyPrinting().create();
+	private static WebController controller = new WebController();
 
 	@Autowired
 	JobRepo jobRepo;
@@ -129,14 +133,20 @@ public class OtherController {
 	@RequestMapping(value = "/logout", method = { RequestMethod.GET })
 	@ResponseBody
 	public ResponseEntity<?> logout(HttpServletRequest request) {
+		boolean alreadyLogged = false; 
 		if (request.getSession().getAttribute("loggedIn") == null) {
-			return new ResponseEntity<ControllerError>(
-					new ControllerError(HttpStatus.OK.value(), "Logged out. You were not logged in though ;P"),
-					HttpStatus.OK);
+			alreadyLogged = true;
 		}
 		request.getSession().setAttribute("loggedIn", null);
 		request.getSession().setAttribute("email", null);
-		return new ResponseEntity<>(HttpStatus.OK);
+		if(alreadyLogged){
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.OK.value(), "Logged out. You were not logged in though ;P"),
+					HttpStatus.OK);
+		}else{
+			return new ResponseEntity<>(HttpStatus.OK);
+		}
+		
 	}
 
 	/**
@@ -218,8 +228,17 @@ public class OtherController {
 			type = ApplicationType.APPLIED;
 		}
 		Application application = new Application(user, job, type, status);
-
 		appRepo.save(application);
+
+		String subject = "Thank you for applying to " + job.getCompany().getName() + " via Job-Board";
+		try {
+			controller.sendEmail(user.getEmailid(), subject, job.getDescription());
+		} catch (Exception e) {
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.OK.value(), "Unable to send email. But applied to job"),
+					HttpStatus.OK);
+		}
+
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
 
@@ -277,28 +296,27 @@ public class OtherController {
 		compRepo.save(company);
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
-	
+
 	/**
-	 * 12) get all jobs for an employer [GET request]
+	 * 12) get all jobs for an employer (the one logged in) [GET request]
 	 * 
 	 * @param request
 	 * @return
 	 */
-	@RequestMapping(value="/employer/jobs", method={RequestMethod.GET})
+	@RequestMapping(value = "/employer/jobs", method = { RequestMethod.GET })
 	@ResponseBody
 	public ResponseEntity<?> getAllJobsForEmployer(HttpServletRequest request) {
-		System.out.println("isLogged IN --> "+
-				(String) request.getSession().getAttribute("employer"));
+		System.out.println("isLogged IN --> " + (String) request.getSession().getAttribute("employer"));
 		System.out.println((String) request.getSession().getAttribute("email"));
 		if (!((String) request.getSession().getAttribute("loggedIn")).equals("employer")) {
 			return new ResponseEntity<ControllerError>(
 					new ControllerError(HttpStatus.FORBIDDEN.value(), "Employer not logged in"), HttpStatus.FORBIDDEN);
 		}
-		
+
 		String email = (String) request.getSession().getAttribute("email");
 		Company company = compRepo.findByEmailid(email);
 		List<Job> jobs = company.getJobs();
-		
+
 		return new ResponseEntity<List<Job>>(jobs, HttpStatus.OK);
 	}
 
