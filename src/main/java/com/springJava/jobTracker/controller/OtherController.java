@@ -63,6 +63,7 @@ public class OtherController {
 	@RequestMapping(value = "/login", method = { RequestMethod.POST })
 	@ResponseBody
 	public ResponseEntity<?> login(HttpServletRequest request, HttpEntity<String> httpEntity) throws IOException {
+		boolean isUser = false;
 		HttpStatus responseStatus = null;
 		request.setCharacterEncoding("UTF-8");
 		String body = httpEntity.getBody();
@@ -94,6 +95,7 @@ public class OtherController {
 				request.getSession().setAttribute("loggedIn", "user");
 				request.getSession().setAttribute("email", user.getEmailid());
 				responseStatus = HttpStatus.OK;
+				isUser = true;
 			} else { // incorrect pwd
 				responseStatus = HttpStatus.FORBIDDEN;
 			}
@@ -110,6 +112,7 @@ public class OtherController {
 					request.getSession().setAttribute("loggedIn", "employer");
 					request.getSession().setAttribute("email", company.getEmailid());
 					responseStatus = HttpStatus.OK;
+					isUser = false;
 				} else {// incorrect pwd
 					responseStatus = HttpStatus.FORBIDDEN;
 				}
@@ -117,7 +120,14 @@ public class OtherController {
 				responseStatus = HttpStatus.NOT_FOUND;
 			}
 		}
-		ResponseEntity<String> responseEntity = new ResponseEntity<String>(responseStatus);
+		
+		ResponseEntity<String> responseEntity = null;
+		if(isUser){
+			responseEntity = new ResponseEntity<String>("user", responseStatus);;  
+		}else{
+			responseEntity = new ResponseEntity<String>("employer", responseStatus);
+		}
+		
 		return responseEntity;
 	}
 
