@@ -56,9 +56,9 @@ public class OtherController {
 	 * @return
 	 * @throws IOException
 	 */
-	@RequestMapping(value = "/loginFoo", method = { RequestMethod.POST })
+	@RequestMapping(value = "/login", method = { RequestMethod.POST })
 	@ResponseBody
-	public ResponseEntity<?> loginFoo(HttpServletRequest request, HttpEntity<String> httpEntity) throws IOException {
+	public ResponseEntity<?> login(HttpServletRequest request, HttpEntity<String> httpEntity) throws IOException {
 		HttpStatus responseStatus = null;
 		request.setCharacterEncoding("UTF-8");
 		String body = httpEntity.getBody();
@@ -102,16 +102,6 @@ public class OtherController {
 		return responseEntity;
 	}
 
-	private String readBody(HttpServletRequest request) throws IOException {
-		BufferedReader bodyReader = request.getReader();
-		StringBuffer buffer = new StringBuffer();
-		String lineRead = bodyReader.readLine();
-		while (lineRead != null) {
-			buffer.append(lineRead);
-		}
-		return buffer.toString();
-	}
-
 	/**
 	 * 7) View a job from search results
 	 * 
@@ -138,16 +128,25 @@ public class OtherController {
 	 */
 	@RequestMapping(value = "/jobs/view/{jobId}/apply", method = { RequestMethod.POST })
 	@ResponseBody
-	public ResponseEntity<?> applyForJob(HttpServletRequest request, @PathVariable Long jobId) {
+	public ResponseEntity<?> applyForJob(HttpServletRequest request, @PathVariable Long jobId,
+			HttpEntity<String> httpEntity) {
 		Job job = jobRepo.findOne(jobId);
+
+		String body = httpEntity.getBody();
+		// read body
+		JsonElement jelem = gson.fromJson(body, JsonElement.class);
+		JsonObject jobj = jelem.getAsJsonObject();
+		String emailid = jobj.get("Email").getAsString();
+
 		if (job == null) {
 			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
 					"Job with id " + String.valueOf(jobId) + " Not found"), HttpStatus.NOT_FOUND);
 		}
-		User user = userRepo.findByEmailid(request.getParameter("Email"));
+		User user = userRepo.findByEmailid(emailid);
 		if (user == null) {
-			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
-					"User with email " + request.getParameter("Email") + " Not found"), HttpStatus.NOT_FOUND);
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.NOT_FOUND.value(), "User with email " + emailid + " Not found"),
+					HttpStatus.NOT_FOUND);
 		}
 		ApplicationStatus status = ApplicationStatus.PENDING;
 		ApplicationType type = ApplicationType.APPLIED;
@@ -170,30 +169,37 @@ public class OtherController {
 	 */
 	@RequestMapping(value = "/employers/{companyId}/update", method = { RequestMethod.PUT })
 	@ResponseBody
-	public ResponseEntity<?> updateCompany(HttpServletRequest request, @PathVariable Long companyId) {
+	public ResponseEntity<?> updateCompany(HttpServletRequest request, @PathVariable Long companyId,
+			HttpEntity<String> httpEntity) {
 		Company company = compRepo.findOne(companyId);
 		if (company == null) {
 			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
 					"Company with id " + String.valueOf(companyId) + " Not found"), HttpStatus.NOT_FOUND);
 		}
-		String emailid = request.getParameter("Email ID");
-		String name = request.getParameter("Company Name");
-		String website = request.getParameter("Website");
-		String address = request.getParameter("Address_Headquarters");
-		String description = request.getParameter("Description");
-		String logo_image = request.getParameter("Logo_Image_URL");
+
+		String body = httpEntity.getBody();
+		// read body
+		JsonElement jelem = gson.fromJson(body, JsonElement.class);
+		JsonObject jobj = jelem.getAsJsonObject();
+
+		JsonElement emailid = jobj.get("Email ID");
+		JsonElement name = jobj.get("Company Name");
+		JsonElement website = jobj.get("Website");
+		JsonElement address = jobj.get("Address_Headquarters");
+		JsonElement description = jobj.get("Description");
+		JsonElement logo_image = jobj.get("Logo_Image_URL");
 		if (emailid != null)
-			company.setEmailid(emailid);
+			company.setEmailid(emailid.getAsString());
 		if (name != null)
-			company.setName(name);
+			company.setName(name.getAsString());
 		if (website != null)
-			company.setWebsite(website);
+			company.setWebsite(website.getAsString());
 		if (address != null)
-			company.setAddress(address);
+			company.setAddress(address.getAsString());
 		if (description != null)
-			company.setDescription(description);
+			company.setDescription(description.getAsString());
 		if (logo_image != null)
-			company.setLogo_image(logo_image);
+			company.setLogo_image(logo_image.getAsString());
 
 		compRepo.save(company);
 		return new ResponseEntity<>(HttpStatus.OK);
