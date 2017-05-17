@@ -32,29 +32,24 @@ function  verifyUser(e) {
     var input = inputArray[0];
 
     if(input.getAttribute("name")==="vCode") {
-        verifyRequestObj["vCode"] = input.value;
+        verifyRequestObj["verificationCode"] = input.value;
         vCode = input.value;
     }
 
     ajaxCall("POST", "/users/verify", verifyRequestObj, function (status, body) {
-        if (status == 200) {
-            //get userToken in auth response
-            var responseObj = JSON.parse(body);
-
-            if (responseObj.message === "wrongCode") {
-                window.location.href = "UserVerification.html?errorMessage=" + responseObj.message;
-                return;
-            }
-
-            var userType = localStorage.getItem("userType")
+      
+    	if (status == 200) {
+          
+    		var userType = localStorage.getItem("userType")
 
             if(userType == "employer")
-            window.location.href = "Dashboard.html";
+            		window.location.href = "/Dashboard.html";
             else if (userType == "user")
-                window.location.href = "EmployerDashboard.html";
+                window.location.href = "/EmployerDashboard.html";
 
-        } else {
-            window.location.href = "UserVerification.html";
+        } else if (status == 403) {
+        	 window.location.href = "/UserVerification.html?errorMessage=wrongCode";
+             return;
         }
     });
 }
@@ -63,7 +58,7 @@ function signup(e) {
     e.preventDefault();
     var error = document.getElementById("error");
     error.style.visibility = "none";
-    var email, address, Name, password, CompanyDescription,LogoImg ;
+    var email, address, Name, password, CompanyDescription,LogoImg,Website ;
     var errorMessage = "";
 
     var signupForm = e.target;
@@ -74,34 +69,41 @@ function signup(e) {
         var input = inputArray[i];
 
         if (input.getAttribute("name") === "name") {
-            signUpRequestObj["name"] = input.value;
+            signUpRequestObj["Company Name"] = input.value;
             Name = input.value;
         }
 
         if (input.getAttribute("name") === "email") {
             email = input.value;
-            signUpRequestObj["email"] = input.value;
+            signUpRequestObj["Email ID"] = input.value;
         }
 
         if (input.getAttribute("name") === "password") {
-            signUpRequestObj["userpassword"] = input.value;
+            signUpRequestObj["Password"] = input.value;
             password = input.value;
         }
 
         if (input.getAttribute("name") === "address") {
-            signUpRequestObj["address"] = input.value;
+            signUpRequestObj["Address_Headquarters"] = input.value;
             address=input.value;
         }
 
         if (input.getAttribute("name") === "description") {
-            signUpRequestObj["description"] = input.value;
+            signUpRequestObj["Description"] = input.value;
             CompanyDescription=input.value;
+        }
+        
+        if (input.getAttribute("name") === "website") {
+            signUpRequestObj["Website"] = input.value;
+            Website=input.value;
         }
 
         if (input.getAttribute("name") === "logo") {
-            signUpRequestObj["logo"] = input.value;
+            signUpRequestObj["Logo_Image_URL"] = input.value;
             LogoImg=input.value;
         }
+        
+        
 
 
     }
@@ -137,6 +139,15 @@ function signup(e) {
         inputArray[4].focus();
         return;
     }
+    
+    else if (Website === undefined || Website === "")
+    {
+        errorMessage = "Enter your company's website."
+        error.innerHTML = errorMessage;
+        error.style.display = "block";
+        inputArray[5].focus();
+        return;
+    }
 
 
     signUpRequestObj["usertype"] = "company";
@@ -144,22 +155,27 @@ function signup(e) {
     sessionStorage.setItem("signUpRequestObj", JSON.stringify(signUpRequestObj));
 
     ajaxCall("POST", "/employers/create", signUpRequestObj, function (status, body) {
-        if (status == 200) {
+       
+    	if (status == 201) {
             //get userToken in auth response
-            var responseObj = JSON.parse(body);
+            /*var responseObj = JSON.parse(body);
 
             if (responseObj.message === "emailexists") {
                 window.location.href = "Company_SignUp.html?errorMessage=" + responseObj.message;
                 return;
-            }
-            localStorage.setItem("userEmail", loginRequestObj["email"]);
+            }*/
+            
+  
+        	 localStorage.setItem("userEmail", signUpRequestObj["Email ID"]);
+             localStorage.setItem("userType","employer");
 
-            localStorage.setItem("userType","employer");
-
-
-            window.location.href = "UserVerification.html";
+            console.log("Employer sign up successful")
+            
+            window.location.href = "/UserVerification.html";
+            
         } else {
-            window.location.href = "Company_SignUp.html";
+        	console.log("Employer sign up fail")
+            window.location.href = "/Company_SignUp.html";
         }
     });
 
@@ -248,14 +264,17 @@ function login(e) {
 
     }
 
-    ajaxCall("POST", "/loginFoo", loginRequestObj, function (status, body) {
-        if (status == 200) {
+    ajaxCall("POST", "/login", loginRequestObj, function (status, body) {
+        
+    	if (status == 200) {
+    		
+            localStorage.setItem("userEmail", loginRequestObj["Email ID"]);
+            localStorage.setItem("userType", body);
 
-            localStorage.setItem("userEmail", loginRequestObj["email"]);
-
-
-
-            window.location.href = "/Dashboard.html";
+            if(body == "employer")
+            		window.location.href = "/EmployerDashboard.html";
+            else if (body == "user")
+            		window.location.href = "/Dashboard.html";
         }
 
         else if (status == 403) {
@@ -280,15 +299,19 @@ function login(e) {
 }
 
 function logout(e) {
+	
     e.preventDefault();
 
-    var url = "/user/logout";
+    var url = "/logout";
 
     var logoutRequestObj = {};
 
-    ajaxCall("PUT", url, logoutRequestObj, function (status, body) {
+    ajaxCall("GET", url, logoutRequestObj, function (status, body) {
+    	
+    	console.log(status);
         if (status == 200) {
-            localStorage.setItem("userEmail", "");
+            localStorage.setItem("userEmail", null);
+            localStorage.setItem("userType", null);
             window.location.href = "/index.html";
         } else {
             console.log("Logout not done : " + status);

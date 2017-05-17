@@ -128,14 +128,20 @@ public class OtherController {
 	@RequestMapping(value = "/logout", method = { RequestMethod.GET })
 	@ResponseBody
 	public ResponseEntity<?> logout(HttpServletRequest request) {
+		boolean alreadyLogged = false;
 		if (request.getSession().getAttribute("loggedIn") == null) {
-			return new ResponseEntity<ControllerError>(
-					new ControllerError(HttpStatus.OK.value(), "Logged out. You were not logged in though ;P"),
-					HttpStatus.OK);
+			alreadyLogged = true;
 		}
 		request.getSession().setAttribute("loggedIn", null);
 		request.getSession().setAttribute("email", null);
-		return new ResponseEntity<>(HttpStatus.OK);
+		if (alreadyLogged) {
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.OK.value(), "Logged out. You were not logged in though ;P"),
+					HttpStatus.OK);
+		} else {
+			return new ResponseEntity<>(HttpStatus.OK);
+		}
+
 	}
 
 	/**
