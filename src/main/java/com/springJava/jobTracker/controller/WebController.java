@@ -112,6 +112,7 @@ public class WebController {
 	public ResponseEntity<?> verifyUser(HttpServletRequest request, HttpEntity<String> httpEntity)
 			throws UnsupportedEncodingException {
 		request.setCharacterEncoding("UTF-8");
+		
 		String body = httpEntity.getBody();
 
 		// read body
@@ -158,7 +159,7 @@ public class WebController {
 
 		request.setCharacterEncoding("UTF-8");
 		String body = httpEntity.getBody();
-
+		System.out.println(body);
 		// read body
 		JsonElement jelem = gson.fromJson(body, JsonElement.class);
 		JsonObject jobj = jelem.getAsJsonObject();
