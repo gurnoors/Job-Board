@@ -98,6 +98,7 @@ public class WebController {
 	@RequestMapping(value = "/employers/create", method = { RequestMethod.POST })
 	public ResponseEntity<?> createEmployer(String emailid, String company_name, String password, String website,
 			String address, String description, String logo) {
+		
 		User user = userRepo.findByEmailid(emailid);
 		Company company = compRepo.findByEmailid(emailid);
 		if (user != null || company != null) {

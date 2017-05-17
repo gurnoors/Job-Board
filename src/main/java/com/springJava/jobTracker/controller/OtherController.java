@@ -1,5 +1,7 @@
 package com.springJava.jobTracker.controller;
 
+import java.io.UnsupportedEncodingException;
+
 import javax.servlet.http.HttpServletRequest;
 
 import org.hibernate.sql.Update;
@@ -8,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -45,13 +48,31 @@ public class OtherController {
 	 * 
 	 * @param request
 	 * @return
+	 * @throws UnsupportedEncodingException 
 	 */
 	@RequestMapping(value = "/login", method = { RequestMethod.POST })
 	@ResponseBody
-	public ResponseEntity<?> login(HttpServletRequest request) {
+	public ResponseEntity<?> login(
+			Company companyObj,
+			HttpServletRequest request) throws UnsupportedEncodingException {
+		
+			
 		HttpStatus responseStatus = null;
+		
+		System.out.println(companyObj.getEmailid());
+		System.out.println(companyObj.getPassword());
+		
+		System.out.println(request.getAttribute("Email ID"));
+		
 		String emailid = request.getParameter("Email ID");
+		
+		System.out.println(request.getHeader("Content-Type"));
+		
+		
+		
 		String pwd = request.getParameter("Password");
+		
+		System.out.println(emailid + " --> " + pwd);
 		// later: (in create requests) get body and map it to entity using JAXB
 		// or GSON
 		// request.getReader()
