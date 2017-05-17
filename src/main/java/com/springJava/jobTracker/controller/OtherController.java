@@ -1,12 +1,14 @@
 package com.springJava.jobTracker.controller;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+
 import javax.servlet.http.HttpServletRequest;
 
-import org.hibernate.sql.Update;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -27,8 +29,15 @@ import com.springJava.jobTracker.repo.UserRepo;
 
 import javax.servlet.http.HttpServletRequest;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+
 @RestController
 public class OtherController {
+	Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
 	@Autowired
 	JobRepo jobRepo;
 	@Autowired
@@ -45,17 +54,28 @@ public class OtherController {
 	 * 
 	 * @param request
 	 * @return
+	 * @throws IOException
 	 */
-	@RequestMapping(value = "/login", method = { RequestMethod.POST })
+	@RequestMapping(value = "/loginFoo", method = { RequestMethod.POST })
 	@ResponseBody
-	public ResponseEntity<?> login(HttpServletRequest request) {
+	public ResponseEntity<?> loginFoo(HttpServletRequest request, HttpEntity<String> httpEntity) throws IOException {
 		HttpStatus responseStatus = null;
-		String emailid = request.getParameter("Email ID");
-		String pwd = request.getParameter("Password");
-		// later: (in create requests) get body and map it to entity using JAXB
-		// or GSON
-		// request.getReader()
+		request.setCharacterEncoding("UTF-8");
+		String body = httpEntity.getBody();
+
+		// read body
+		JsonElement jelem = gson.fromJson(body, JsonElement.class);
+		JsonObject jobj = jelem.getAsJsonObject();
+		String emailid = jobj.get("Email ID").getAsString();
+		String pwd = jobj.get("Password").getAsString();
+
+		// String emailid = request.getParameter("Email ID");
+		// String pwd = request.getParameter("Password");
+		System.out.println(request.getHeader("Content-Type"));
+		System.out.println(request.toString());
+		System.out.println(emailid + " ---> " + pwd);
 		User user = userRepo.findByEmailid(emailid);
+		// TODO: check if verified
 		if (user != null) {
 			if (pwd.equals(user.getPassword())) {
 				request.getSession().setAttribute("loggedIn", "user");
@@ -80,6 +100,16 @@ public class OtherController {
 		}
 		ResponseEntity<String> responseEntity = new ResponseEntity<String>(responseStatus);
 		return responseEntity;
+	}
+
+	private String readBody(HttpServletRequest request) throws IOException {
+		BufferedReader bodyReader = request.getReader();
+		StringBuffer buffer = new StringBuffer();
+		String lineRead = bodyReader.readLine();
+		while (lineRead != null) {
+			buffer.append(lineRead);
+		}
+		return buffer.toString();
 	}
 
 	/**
@@ -129,8 +159,7 @@ public class OtherController {
 
 	/**
 	 * 
-	 * 10) Employer details Update [PUT request]
-	 * Request Body
+	 * 10) Employer details Update [PUT request] Request Body
 	 * 
 	 * { Email ID: “”, Company Name: “”, Website:””, Address_Headquarters: ””,
 	 * Description:””, Logo_Image_URL : ”” }
@@ -153,30 +182,21 @@ public class OtherController {
 		String address = request.getParameter("Address_Headquarters");
 		String description = request.getParameter("Description");
 		String logo_image = request.getParameter("Logo_Image_URL");
-		if(emailid != null)
+		if (emailid != null)
 			company.setEmailid(emailid);
-		if(name != null)
+		if (name != null)
 			company.setName(name);
-		if(website != null)
+		if (website != null)
 			company.setWebsite(website);
-		if(address != null)
+		if (address != null)
 			company.setAddress(address);
-		if(description != null)
+		if (description != null)
 			company.setDescription(description);
-		if(logo_image != null)
+		if (logo_image != null)
 			company.setLogo_image(logo_image);
-		
+
 		compRepo.save(company);
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
 
-	
-	
-	
-	
-	
-	
-	
-	
-	
 }
