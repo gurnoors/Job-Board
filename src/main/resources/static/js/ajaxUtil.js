@@ -102,10 +102,12 @@ var FreeTextSearch,SearchByCompany,SearchByLocation,SearchBySalary;
                 salary + '</div>';
 
 
-                var jobtitleClick = document.getElementById(jobTitleId);
-
-                jobtitleClick.onclick = viewJob(jobid);
+             
+                
                 $(searchList).appendTo("#searchJobResults");
+                
+                /* var jobtitleClick = document.getElementById(jobTitleId);
+                jobtitleClick.onclick = viewJob(jobid);*/
             }
         }
         else {
