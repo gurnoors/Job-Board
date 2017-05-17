@@ -1,15 +1,11 @@
 package com.springJava.jobTracker.controller;
 
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
-import javax.servlet.http.HttpServletRequest;
-
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Propagation;
@@ -20,10 +16,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.springJava.jobTracker.model.Company;
 import com.springJava.jobTracker.model.Job;
 import com.springJava.jobTracker.model.JobStatus;
@@ -38,9 +30,7 @@ import com.springJava.jobTracker.repo.UserRepo;
 @RestController
 @Transactional(propagation = Propagation.REQUIRES_NEW)
 public class WebController {
-	
-	Gson gson = new GsonBuilder().setPrettyPrinting().create();
-	
+
 	@Autowired
 	JobRepo jobRepo;
 	@Autowired
@@ -57,7 +47,7 @@ public class WebController {
 	public String welcome() {
 		return "Welcome to your personal Job Tracker.";
 	}
-	
+
 
 	// Job seeker sign up
 	@RequestMapping(value = "/users/create", method = { RequestMethod.POST })
@@ -70,8 +60,12 @@ public class WebController {
 		JsonObject jobj = jelem.getAsJsonObject();
 		String username = jobj.get("username").getAsString();
 		String password = jobj.get("password").getAsString();
-		String emailid = jobj.get("emailid").getAsString();
-		
+		String emailid = jobj.get("emailID").getAsString();
+
+		if(username == null || password == null || emailid == null){
+			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.BAD_REQUEST.value(),
+					"Insufficient data"), HttpStatus.BAD_REQUEST);
+		}
 		User user = userRepo.findByEmailid(emailid);
 		Company company = compRepo.findByEmailid(emailid);
 		if (user != null || company != null) {
@@ -87,38 +81,52 @@ public class WebController {
 		}
 		Random rand = new Random();
 		String code = String.format("%04d", rand.nextInt(10000));
-		user = new User(username, emailid, password, code); // need to encrypt
-															// password
+		user = new User(username, emailid, password, code); // need to encrypt password
+
 		userRepo.save(user);
 
-		//sendEmail(emailid, "verification code",
-				//"your verification code is " + user.getVerificationcode());
-		String msg = "User with id " + user.getUserid() + " is created successfully";
+		request.getSession().setAttribute("loggedIn", "user");
+		request.getSession().setAttribute("email", emailid);
+
+		sendEmail(emailid, "verification code",
+				"your verification code is " + user.getVerificationcode());
+		String msg = "User with id " + user.getUserid() + " is created successfully. Verification Pending....";
 		return new ResponseEntity<String>(msg, HttpStatus.CREATED); // need to send an
 																// email
 																// notification
 																// as well.
 	}
 
-	// job seeker verification
+	// job seeker & employer verification
 	@RequestMapping(value = "/users/verify", method = { RequestMethod.POST })
-	public ResponseEntity<?> verifyUser(@RequestParam("emailid") String emailid, @RequestParam("code") String code) {
+	public ResponseEntity<?> verifyUser(HttpServletRequest request, HttpEntity<String> httpEntity) throws UnsupportedEncodingException{
+		request.setCharacterEncoding("UTF-8");
+		String body = httpEntity.getBody();
+
+		// read body
+		JsonElement jelem = gson.fromJson(body, JsonElement.class);
+		JsonObject jobj = jelem.getAsJsonObject();
+		String verificationCode = jobj.get("verificationCode").getAsString();
+
+		//get email id from the session
+		String emailid = (String) request.getSession().getAttribute("email");
+
 		User user = userRepo.findByEmailid(emailid);
 		String msg = null;
 		if (user != null) {
-			if (!user.getVerificationcode().equals(code)) {
+			if (!user.getVerificationcode().equals(verificationCode)) {
 				return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.UNAUTHORIZED.value(),
 						"Entered verification code does not match. Try Again"), HttpStatus.UNAUTHORIZED);
 			}
 			else{
 				user.setStatus(true);
 				msg = "User with id " + user.getEmailid() + " is verified successfully";
-				sendEmail("anubha.mandal@sjsu.edu", "Welcome to the site", "you account has been created successfully.");
+				sendEmail(emailid, "Welcome to the site", "you account has been verified successfully.");
 			}
 		} else {
 			Company company = compRepo.findByEmailid(emailid);
 			if (company != null) {
-				if (!company.getVerificationcode().equals(code)) {
+				if (!company.getVerificationcode().equals(verificationCode)) {
 					return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.UNAUTHORIZED.value(),
 							"Entered verification code does not match. Try Again"), HttpStatus.UNAUTHORIZED);
 				}
@@ -130,56 +138,56 @@ public class WebController {
 			}
 		}
 		return new ResponseEntity<>(msg, HttpStatus.OK);
-		
 	}
 
 	// Employer sign up
 	@RequestMapping(value = "/employers/create", method = { RequestMethod.POST })
-	public ResponseEntity<?> createEmployer(String emailid, String company_name, String password, String website,
-			String address, String description, String logo) {
+	public ResponseEntity<?> createEmployer(HttpServletRequest request, HttpEntity<String> httpEntity)
+			throws UnsupportedEncodingException{
+
+		request.setCharacterEncoding("UTF-8");
+		String body = httpEntity.getBody();
+
+		// read body
+		JsonElement jelem = gson.fromJson(body, JsonElement.class);
+		JsonObject jobj = jelem.getAsJsonObject();
+		String emailid = jobj.get("Email ID").getAsString();
+		String password = jobj.get("Password").getAsString();
+		String companyname = jobj.get("Company Name").getAsString();
+		String website = jobj.get("Website").getAsString();
+		String address = jobj.get("Address_Headquarters").getAsString();
+		String description = jobj.get("Description").getAsString();
+		String logo = jobj.get("Logo_Image_URL").getAsString();
+
+		if(emailid == null || password == null || companyname == null){
+			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.BAD_REQUEST.value(),
+					"Insufficient data"), HttpStatus.BAD_REQUEST);
+		}
 		User user = userRepo.findByEmailid(emailid);
 		Company company = compRepo.findByEmailid(emailid);
-		if (user != null || company != null) {
-			return new ResponseEntity<ControllerError>(
-					new ControllerError(HttpStatus.BAD_REQUEST.value(),
-							"Emailid with " + emailid + " is already registered, try logging in."),
-					HttpStatus.BAD_REQUEST);
+		if( user != null || company !=null)
+		{
+			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.BAD_REQUEST.value(),
+					"Emailid with " +emailid+ " is already registered, try logging in."), HttpStatus.BAD_REQUEST);
 		}
-		user = userRepo.findByUsername(company_name);
-		company = compRepo.findByName(company_name);
-		if (user != null || company != null) {
-			return new ResponseEntity<ControllerError>(
-					new ControllerError(HttpStatus.BAD_REQUEST.value(), "Name already registered"),
-					HttpStatus.BAD_REQUEST);
+		user = userRepo.findByUsername(companyname);
+		company = compRepo.findByName(companyname);
+		if( user != null || company != null)
+		{
+			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.BAD_REQUEST.value(),
+					"Name already registered"), HttpStatus.BAD_REQUEST);
 		}
 		Random rand = new Random();
 		String code = String.format("%04d", rand.nextInt(10000));
-		company = new Company(company_name, emailid, password, website, address, description, logo, code); // need
-																											// to
-																											// encrypt
-																											// password
+		company = new Company(companyname, emailid, password, website, address, description, logo, code);      // need to encrypt password
 		compRepo.save(company);
-		sendEmail("anubha.mandal@sjsu.edu", "verification code",
-				"your verification code is " + company.getVerificationcode());
-		String msg = "Employer with id " + company.getCompanyid() + "is created successfully";
-		return new ResponseEntity<>(msg, HttpStatus.CREATED); // need to send an
-																// email
-																// notification
-																// as well.
-	}
 
-	// Employer verification
-	@RequestMapping(value = "/employers/verify/{companyid}", method = { RequestMethod.POST })
-	public ResponseEntity<?> verifyCompany(@PathVariable("companyid") Long companyid, String code) {
-		Company company = compRepo.findOne(companyid);
-		if (!company.getVerificationcode().equals(code)) {
-			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.UNAUTHORIZED.value(),
-					"Entered verification code does not match. Try Again"), HttpStatus.UNAUTHORIZED);
-		}
-		company.setStatus(true);
-		String msg = "Company with id " + company.getCompanyid() + " is verified successfully";
-		sendEmail("anubha.mandal@sjsu.edu", "Welcome to the site", "you account has been created successfully.");
-		return new ResponseEntity<>(msg, HttpStatus.CREATED);
+		request.getSession().setAttribute("loggedIn", "employer");
+		request.getSession().setAttribute("email", emailid);
+
+		sendEmail(emailid, "verification code", "your verification code is " + company.getVerificationcode());
+		String msg = "Employer with id " + company.getCompanyid() + " is created successfully";
+		return new ResponseEntity<>(msg, HttpStatus.CREATED); 						// need to send an email notification as well.
 	}
 
 	// Job seeker profile create -- should be same for update as well
