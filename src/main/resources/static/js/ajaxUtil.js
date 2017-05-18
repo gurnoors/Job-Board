@@ -58,7 +58,7 @@ var FreeTextSearch,SearchByCompany,SearchByLocation,SearchBySalary;
 
         if (input.getAttribute("name") === "SearchBySalary") {
             if(input.value === undefined || input.value === "")
-                SearchBySalary = 0;
+                SearchBySalary = "0";
             else
                 SearchBySalary = input.value;
         }
@@ -66,63 +66,94 @@ var FreeTextSearch,SearchByCompany,SearchByLocation,SearchBySalary;
     }
 
     var url = "/jobs/search/"+FreeTextSearch+"/"+SearchByCompany+"/"+SearchByLocation+"/"+SearchBySalary;
-
+    
+    alert(url);
+    
     var searchRequestObj = {};
-    ajaxCall("GET", url, searchRequestObj, function (status, body) {
-        if (status == 200) {
-
+    
+    ajaxCall("GET", url, null , function (status, body) {
+       
+    	if (status == 200 || status == 201) {
             var searchResponseObj = JSON.parse(body);
-
-            for (var i = 0; i < searchResponseObj.length; i++) {
-
-                var jobid = searchResponseObj["jobid"];
-                var jobtitle = searchResponseObj["jobtitle"];
-                var skill = searchResponseObj["skill"];
-                var description = searchResponseObj["description"];
-                var location = searchResponseObj["location"];
-                var salary = searchResponseObj["salary"];
-                var status = searchResponseObj["status"];
-                var company = searchResponseObj["company"];
-
-
-                var searchList = '<div style="display: flex;margin-bottom: 20px;padding: 20px;position:' +
-                    ' relative" class="boxShadowSmall"> <a href="#" id = "jobTitleId"> ' +
-                    jobtitle + ' </a></div> ' +
-                    '<div style="display: flex;margin-bottom: 20px;padding: 20px;position:' +
-                    ' relative" class="boxShadowSmall">' +
-                    skill + '</div>' +
-                '<div style="display: flex;margin-bottom: 20px;padding: 20px;position:' +
-                'relative" class="boxShadowSmall">' +
-                description + '</div>' +
-                '<div style="display: flex;margin-bottom: 20px;padding: 20px;position:' +
-                'relative" class="boxShadowSmall">' +
-                location + '</div>' +
-                '<div style="display: flex;margin-bottom: 20px;padding: 20px;position:' +
-                'relative" class="boxShadowSmall">' +
-                salary + '</div>';
-
-
-             
-                
-                $(searchList).appendTo("#searchJobResults");
-                
-                /* var jobtitleClick = document.getElementById(jobTitleId);
-                jobtitleClick.onclick = viewJob(jobid);*/
-            }
+            console.log(JSON.stringify(searchResponseObj));
+            console.log(searchResponseObj);
+            viewJobs(e,searchResponseObj);
         }
         else {
             console.log("Search not done : " + status);
         }
 
+    	
     });
+    	 
+
+    
+   
+    	
+
+ 
+    	
+
 
 }
 
 
-function viewJob(jobid) {
+function viewJobs(e,searchResponseObj) {
+	
+	alert("In view jobs");
+	
+	for (var i = 0; i < searchResponseObj.length; i++) {
+
+        var jobid = searchResponseObj[i]["jobid"];
+        var jobtitle = searchResponseObj[i]["jobtitle"];
+        var skill = searchResponseObj[i]["skill"];
+        var description = searchResponseObj[i]["description"];
+        var location = searchResponseObj[i]["location"];
+        var salary = searchResponseObj[i]["salary"];
+         var company = searchResponseObj[i]["company"];
+
+
+
+         
+        var searchList = '<div style="display: flex;margin-bottom: 20px;padding: 20px;position:' +
+            ' relative" class="boxShadowSmall"> <a href="#" id = "jobTitleId"> ' +
+            jobtitle+"-"+jobid + ' </a></div> ' +
+            '<div style="display: flex;margin-bottom: 20px;padding: 20px;position:' +
+            ' relative" class="boxShadowSmall">' +
+            skill + '</div>' +
+        '<div style="display: flex;margin-bottom: 20px;padding: 20px;position:' +
+        'relative" class="boxShadowSmall">' +
+        description + '</div>' +
+        '<div style="display: flex;margin-bottom: 20px;padding: 20px;position:' +
+        'relative" class="boxShadowSmall">' +
+        location + '</div>' +
+        '<div style="display: flex;margin-bottom: 20px;padding: 20px;position:' +
+        'relative" class="boxShadowSmall">' +
+        salary + '</div>';
+    
+        
+        $(searchList).appendTo("#searchJobResults").ready(function(){
+        	
+        		var jobtitleClick = document.getElementById(jobTitleId);
+        		
+        		var jobid = jobtitleClick.innerHtml;
+        		
+        		console.log(jobid);
+        		var str = jobid.split("-");
+        		console.log(str);
+                jobtitleClick.onclick = viewJob(str[1]);
+        });
+        
+         
+    }
+}
+
+
+
+/*function viewJob(jobid) {
     localStorage.setItem("jobId",jobid);
     window.location = "JobView.html";
-}
+}*/
 
 
 //load view of a particular job
@@ -150,12 +181,12 @@ function loadjobviewPage()
             var company = responseObj["company"];
 
             if (jobid!==undefined && jobid!=null) {
-                window.location.href = "viewJob.html?jobid="+jobid+"&jobtitle=" + jobtitle+"&skill="+skill+"&description="+description+"&location="
+                window.location.href = "JobView.html?jobid="+jobid+"&jobtitle=" + jobtitle+"&skill="+skill+"&description="+description+"&location="
                 +location+"&salary="+salary;
                 return;
             }
         } else {
-            alert("In loadjobviewPage()");
+   
 
             window.location.href = "Dashboard.html";
         }

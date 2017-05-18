@@ -291,8 +291,9 @@ public class WebController {
 			RequestMethod.GET })
 	public ResponseEntity<?> searchJobUser(HttpServletRequest request, @PathVariable("searchTerm") String freeText,
 			@PathVariable("companyName") String companyname, @PathVariable("location") String location,
-			@PathVariable("salaryRange") int salary) throws UnsupportedEncodingException {
+			@PathVariable("salaryRange") String salary1) throws UnsupportedEncodingException {
 
+		int salary = Integer.parseInt(salary1);
 		List<Job> freeList = new ArrayList<Job>();
 		List<Job> compList = new ArrayList<Job>();
 		List<Job> locList = new ArrayList<Job>();
