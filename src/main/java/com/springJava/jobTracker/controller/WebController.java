@@ -133,7 +133,12 @@ public class WebController {
 			} else {
 				user.setStatus(true);
 				msg = "User with id " + user.getEmailid() + " is verified successfully";
-				sendEmail(emailid, "Welcome to the site", "you account has been verified successfully.");
+				
+				try {
+					sendEmail(emailid, "Welcome to the site", "you account has been verified successfully.");
+				} catch (Exception e) {
+				}
+				
 			}
 		} else {
 			Company company = compRepo.findByEmailid(emailid);
@@ -144,8 +149,14 @@ public class WebController {
 				} else {
 					company.setStatus(true);
 					msg = "User with id " + company.getEmailid() + " is verified successfully";
-					sendEmail("anubha.mandal@sjsu.edu", "Welcome to the site",
-							"you account has been created successfully.");
+					try {
+						sendEmail("anubha.mandal@sjsu.edu", "Welcome to the site",
+								"you account has been created successfully.");
+					} catch (Exception e) {
+						// TODO: handle exception
+						
+					}
+					
 				}
 			}
 		}
@@ -195,6 +206,8 @@ public class WebController {
 					new ControllerError(HttpStatus.BAD_REQUEST.value(), "Name already registered"),
 					HttpStatus.BAD_REQUEST);
 		}
+		
+		
 		Random rand = new Random();
 		String code = String.format("%04d", rand.nextInt(10000));
 		company = new Company(companyname, emailid, password, website, address, description, logo, code); // need
@@ -205,9 +218,15 @@ public class WebController {
 
 		request.getSession().setAttribute("loggedIn", "employer");
 		request.getSession().setAttribute("email", emailid);
+		
+		String msg = null;
+		try {
+			sendEmail(emailid, "verification code", "your verification code is " + company.getVerificationcode());
+			 msg = "Employer with id " + company.getCompanyid() + " is created successfully. Verification email sent";
+		} catch (Exception e) {
+			msg = "Employer with id " + company.getCompanyid() + " is created successfully."; 
+		}
 
-		sendEmail(emailid, "verification code", "your verification code is " + company.getVerificationcode());
-		String msg = "Employer with id " + company.getCompanyid() + " is created successfully";
 		return new ResponseEntity<>(msg, HttpStatus.CREATED); // need to send an
 																// email
 																// notification
