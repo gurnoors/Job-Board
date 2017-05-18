@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.google.gson.Gson;
@@ -112,7 +113,7 @@ public class WebController {
 	public ResponseEntity<?> verifyUser(HttpServletRequest request, HttpEntity<String> httpEntity)
 			throws UnsupportedEncodingException {
 		request.setCharacterEncoding("UTF-8");
-		
+
 		String body = httpEntity.getBody();
 
 		// read body
@@ -153,7 +154,7 @@ public class WebController {
 
 	// Employer sign up
 	@RequestMapping(value = "/employers/create", method = { RequestMethod.POST })
-
+	@ResponseBody
 	public ResponseEntity<?> createEmployer(HttpServletRequest request, HttpEntity<String> httpEntity)
 			throws UnsupportedEncodingException {
 
@@ -165,8 +166,11 @@ public class WebController {
 		JsonObject jobj = jelem.getAsJsonObject();
 		String emailid = jobj.get("Email ID").getAsString();
 		String password = jobj.get("Password").getAsString();
-		String companyname = jobj.get("Company Name").getAsString();
-		String website = jobj.get("Website").getAsString();
+		String companyname = jobj.get("Company Name").getAsString();;
+		String website = null;
+		if(jobj.get("Website") != null){
+			website = jobj.get("Website").getAsString();
+		}
 		String address = jobj.get("Address_Headquarters").getAsString();
 		String description = jobj.get("Description").getAsString();
 		String logo = jobj.get("Logo_Image_URL").getAsString();
@@ -210,59 +214,86 @@ public class WebController {
 																// as well.
 	}
 
-	// Job seeker profile create -- should be same for update as well
-	@RequestMapping(value = "/users/profile/{userid}", method = { RequestMethod.POST }) // need
-																						// to
-																						// change
-																						// the
-																						// entry
-																						// point
-	public ResponseEntity<?> createUserProfile(@PathVariable("userid") Long userid, String firstname, String lastname,
-			@RequestParam(value = "picture", defaultValue = "null") String picture, // data
-																					// type
-																					// for
-																					// image?
-			@RequestParam(value = "intro", defaultValue = "null") String intro, String workex, String education,
-			String skills, String phone) { // check for data type of education
-											// (double?)
-		User user = userRepo.findOne(userid);
-		if (user == null) {
-			return new ResponseEntity<ControllerError>(
-					new ControllerError(HttpStatus.NOT_FOUND.value(), "User with id " + userid + "not found"),
-					HttpStatus.NOT_FOUND);
-		}
-		Profile profile = profileRepo.findOne(userid);
-		if (profile == null) {
-			// List<String> skillList = Arrays.asList(skills.split("\\,"));
-			// TODO: check if verified
-			profile = new Profile(userid, firstname, lastname, picture, intro, workex, education, skills, phone);
-			profileRepo.save(profile);
-		} else {
-			profileRepo.updateProfile(firstname, lastname, picture, intro, workex, education, skills, phone, userid);
+	// Job seeker profile create  -- same for update as well
+	@RequestMapping(value = "/userprofile/create", method = { RequestMethod.POST })			//need to change the entry point
+	public ResponseEntity<?> createUserProfile(HttpServletRequest request, HttpEntity<String> httpEntity)
+			throws UnsupportedEncodingException{
+
+		request.setCharacterEncoding("UTF-8");
+		String body = httpEntity.getBody();
+
+		// read body
+		JsonElement jelem = gson.fromJson(body, JsonElement.class);
+		JsonObject jobj = jelem.getAsJsonObject();
+		String firstname = jobj.get("First Name").getAsString();
+		String lastname = jobj.get("Last Name").getAsString();
+		String picture = jobj.get("Picture").getAsString();
+		String intro = jobj.get("Self-introduction").getAsString();
+		String workex = jobj.get("Work Experience").getAsString();
+		String education = jobj.get("Education").getAsString();
+		String skills = jobj.get("Skills").getAsString();
+		String phone = jobj.get("Phone").getAsString();
+
+		if (firstname == null || lastname == null || workex == null || education == null || skills == null){
+			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.BAD_REQUEST.value(),
+					"Insufficient data"), HttpStatus.BAD_REQUEST);
 		}
 
-		String msg = "Profile with userid " + userid + "is updated successfully";
-		return new ResponseEntity<>(msg, HttpStatus.OK); // need to send an
-															// email
-															// notification as
-															// well.
+		//get email id from the session
+		String emailid = (String) request.getSession().getAttribute("email");
+
+		User user = userRepo.findByEmailid(emailid);
+		if( user == null)
+		{
+			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
+					"User with id " + user.getUserid() + "not found"), HttpStatus.NOT_FOUND);
+		}
+
+		Profile profile = profileRepo.findOne(user.getUserid());
+		if(profile == null) {
+			//List<String> skillList = Arrays.asList(skills.split("\\,"));
+			profile = new Profile(user.getUserid(), firstname, lastname, picture, intro, workex, education, skills, phone);
+			profileRepo.save(profile);
+		}
+		else {
+			profileRepo.updateProfile(firstname, lastname, picture, intro, workex, education, skills, phone, user.getUserid());
+		}
+
+		String msg = "Profile with userid " + user.getUserid() + "is updated successfully";
+		return new ResponseEntity<>(msg, HttpStatus.OK); 						// need to send an email notification as well.
 	}
 
 	// Post a job
-	@RequestMapping(value = "/jobs/post/{companyid}", method = { RequestMethod.POST })
-	public ResponseEntity<?> postJob(@PathVariable("companyid") Long companyid, String job_title, String skills,
-			String desc, String location, int salary, JobStatus status) { // OPEN,
-																			// FILLED,
-																			// CANCELLED
-		// List<String> skillList = Arrays.asList(skills.split("\\,"));
-		Company company = compRepo.findOne(companyid);
-		if (company == null) {
-			return new ResponseEntity<ControllerError>(
-					new ControllerError(HttpStatus.NOT_FOUND.value(), "Company with id " + companyid + "not found"),
-					HttpStatus.NOT_FOUND);
+	@RequestMapping(value = "/jobs/post", method = { RequestMethod.POST })
+	public ResponseEntity<?> postJob(HttpServletRequest request, HttpEntity<String> httpEntity)
+			throws UnsupportedEncodingException {
+
+		request.setCharacterEncoding("UTF-8");
+		String body = httpEntity.getBody();
+
+		// read body
+		JsonElement jelem = gson.fromJson(body, JsonElement.class);
+		JsonObject jobj = jelem.getAsJsonObject();
+		String job_title = jobj.get("Title").getAsString();
+		String desc = jobj.get("Description").getAsString();
+		String skills = jobj.get("Responsibilities").getAsString();
+		String location = jobj.get("Office Location").getAsString();
+		int salary = jobj.get("Salary").getAsInt();
+
+		if(job_title == null || skills == null)
+		{
+			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.BAD_REQUEST.value(),
+					"Insufficient data"), HttpStatus.BAD_REQUEST);
 		}
-		// TODO: check if verified
-		Job job = new Job(job_title, skills, desc, location, salary, status, company);
+
+		String emailid = (String) request.getSession().getAttribute("email");
+
+		Company company = compRepo.findByEmailid(emailid);
+		if (company == null){
+			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
+					"Company with id " + emailid + "not found"), HttpStatus.NOT_FOUND);
+		}
+		Job job = new Job(job_title, skills, desc, location, salary, JobStatus.OPEN, company);
 		jobRepo.save(job);
 
 		String msg = "Job with id " + job.getJobid() + "is posted successfully";
@@ -270,14 +301,43 @@ public class WebController {
 	}
 
 	// Update a job
-	@RequestMapping(value = "/jobs/{id}", method = { RequestMethod.PUT })
-	public ResponseEntity<?> updateJob(@PathVariable("id") Long id, String job_title, String skills, String desc,
-			String location, int salary, JobStatus status) {
+	@RequestMapping(value = "/jobs/update", method = { RequestMethod.PUT })
+	public ResponseEntity<?> updateJob(HttpServletRequest request, HttpEntity<String> httpEntity)
+			throws UnsupportedEncodingException {
+		//@PathVariable("id") Long id, String job_title, String skills, String desc,
+	//		String location, int salary, JobStatus status) {
 		// company id and name should be taken from company table based on login
+
+		request.setCharacterEncoding("UTF-8");
+		String body = httpEntity.getBody();
+
+		// read body
+		JsonElement jelem = gson.fromJson(body, JsonElement.class);
+		JsonObject jobj = jelem.getAsJsonObject();
+		Long id = jobj.get("id").getAsLong();
+		String job_title = jobj.get("Title").getAsString();
+		String desc = jobj.get("Description").getAsString();
+		String skills = jobj.get("Responsibilities").getAsString();
+		String location = jobj.get("Office Location").getAsString();
+		int salary = jobj.get("Salary").getAsInt();
+		String status_tmp = jobj.get("status").getAsString();
+
+		JobStatus status = JobStatus.OPEN;
+		if (status_tmp.equals("FILLED")){
+			status = JobStatus.FILLED;
+		}
+		else if (status_tmp.equals("CANCELLED")){
+			status = JobStatus.CANCELLED;
+		}
+		else {
+			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.BAD_REQUEST.value(),
+					"Not a valid Status"), HttpStatus.BAD_REQUEST);
+		}
+
 		Job job = jobRepo.findOne(id);
 		if (job == null) {
-			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(), "Not found"),
-					HttpStatus.NOT_FOUND);
+			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
+					"Job with id" +id + "Not found"), HttpStatus.NOT_FOUND);
 		}
 
 		jobRepo.updateJobDetails(job_title, skills, desc, location, salary, status, id);

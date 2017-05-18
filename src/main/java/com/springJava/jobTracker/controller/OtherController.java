@@ -211,7 +211,7 @@ public class OtherController {
 		Profile profile = profileRepo.findOne(user.getUserid());
 		if (profile == null) {
 			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.FORBIDDEN.value(),
-					"Please create yur profile before applying for a job"), HttpStatus.FORBIDDEN);
+					"Please create your profile before applying for a job"), HttpStatus.FORBIDDEN);
 		}
 
 		ApplicationStatus status = ApplicationStatus.PENDING;
