@@ -63,7 +63,7 @@
     window.onload=loadjobviewPage();
 
 if(loadjobviewPage()) {
-    alert("returned!!");
+
     var obj = getAllUrlParams(window.location.href);
 
     var jobid = obj["jobid"];
@@ -80,7 +80,7 @@ if(loadjobviewPage()) {
     document.getElementById("salary").innerHTML = salary;
 }
 else if(!loadjobviewPage()){
-    alert("returned failed!!");
+    
 }
 
 </script>
