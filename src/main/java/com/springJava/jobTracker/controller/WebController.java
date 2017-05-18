@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.google.gson.Gson;
@@ -153,7 +154,7 @@ public class WebController {
 
 	// Employer sign up
 	@RequestMapping(value = "/employers/create", method = { RequestMethod.POST })
-
+	@ResponseBody
 	public ResponseEntity<?> createEmployer(HttpServletRequest request, HttpEntity<String> httpEntity)
 			throws UnsupportedEncodingException {
 
@@ -165,8 +166,11 @@ public class WebController {
 		JsonObject jobj = jelem.getAsJsonObject();
 		String emailid = jobj.get("Email ID").getAsString();
 		String password = jobj.get("Password").getAsString();
-		String companyname = jobj.get("Company Name").getAsString();
-		String website = jobj.get("Website").getAsString();
+		String companyname = jobj.get("Company Name").getAsString();;
+		String website = null;
+		if(jobj.get("Website") != null){
+			website = jobj.get("Website").getAsString();
+		}
 		String address = jobj.get("Address_Headquarters").getAsString();
 		String description = jobj.get("Description").getAsString();
 		String logo = jobj.get("Logo_Image_URL").getAsString();
