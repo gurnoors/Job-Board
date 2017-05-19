@@ -179,7 +179,7 @@ public class OtherController {
 	 * @param jobId
 	 * @return
 	 */
-	@RequestMapping(value = "/jobs/view/{jobId}/apply", method = { RequestMethod.POST })
+	@RequestMapping(value = "/jobs/view/{jobId}/apply", method = { RequestMethod.GET })
 	@ResponseBody
 	public ResponseEntity<?> applyForJob(HttpServletRequest request, @PathVariable Long jobId,
 			HttpEntity<String> httpEntity) {

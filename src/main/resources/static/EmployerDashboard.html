@@ -30,7 +30,7 @@
 
             <div id="mySidenav" class="sidenav">
                 <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
-                <a href="Dashboard.html" target="_self">Browse Posted Jobs </a>
+                <a href="EmployerDashboard.html" target="_self">Browse Posted Jobs </a>
                 <a href="PostJobs.html" target="_self">Post New Positions </a>
                 <a href="editEmployerProfile.html" target="_self">Edit Profile</a>
                 <a href="#" onclick="logout(event)">Logout</a>
@@ -42,8 +42,19 @@
         <div class="main-login main-center">
             <div ng-app="myApp" ng-controller="employerDashboardCtrl">
             <table>
+            	 <thead>
+ 				 <tr>
+     				<th>id</th>
+     				<th>title</th>
+     				<th>description</th>
+     				<th>skill</th>
+     				<th>location</th>
+     				<th>status</th>
+     				<th>Update</th>
+  				</tr>
+ 				</thead>
 	            <tr ng-repeat="job in postedJobs">
-	            	<td>{{ job.id }} </td>
+	            	<td>{{ job.jobid }} </td>
 		            <td>{{ job.jobtitle }}</td>
 		            <td>{{ job.description }}</td>
 		            <td>{{ job.skill }}</td>

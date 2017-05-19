@@ -64,20 +64,20 @@ app.controller('employerDashboardCtrl', function($scope, $http, $window) {
         					}
     }).then(function successCallback(data) 
     		{ 
-    		console.log(data);
-    		$scope.postedJobs = data;
+    		console.log(data.data);
+    		$scope.postedJobs = data.data;
     		}, 
     		function err(data) 
     		{
     		 console.log("error"); 
     		 console.log(data.data.badRequest.msg);
     		});
-	};
 	
 	$scope.editJob = function (job){
 		$window.localStorage.setItem("jobToEdit", job);
 		$window.location.href = "/editJob.html";
 	}
+	
 });
 
 
@@ -91,9 +91,9 @@ app.controller('postJobsCtrl', function($scope, $http, $window) {
         method: 'POST',
         transformResponse: function (data, headersGetter, status) 
         					{ 
-        						if(status=='403')
+        						if(status=='201')
         						{	
-        							console.log("error");
+        							console.log("success");
         							return data;
         						}
         						else{
@@ -102,16 +102,16 @@ app.controller('postJobsCtrl', function($scope, $http, $window) {
         						}; 
         					
         					},
-		data: {	job_title: $scope.job.job_title , 
-			 	desc: $scope.job.desc, 
-			 	skills: $scope.job.skills,
-			 	location: $scope.job.location,
-			 	salary: $scope.job.salary
+		data: {	Title: $scope.job.job_title , 
+				Description: $scope.job.desc, 
+				Responsibilities: $scope.job.skills,
+			 	'Office Location': $scope.job.location,
+			 	Salary: $scope.job.salary
         }
     }).then(function successCallback(data) 
     		{ 
     		console.log(data);
-    		$scope.postedJobs = data;
+    		$window.location.href = "/EmployerDashboard.html";
     		}, 
     		function err(data) 
     		{
@@ -155,7 +155,7 @@ app.controller('editJobCtrl', function($scope, $http, $window) {
     }).then(function successCallback(data) 
     		{ 
     		console.log(data);
-    		$scope.postedJobs = data;
+    		$window.location.href = "/EmployerDashboard.html";
     		}, 
     		function err(data) 
     		{
@@ -186,7 +186,7 @@ app.controller('editCompanyCtrl', function($scope, $http, $window) {
         						}; 
         					
         					},
-		data: {	Company Name: $scope.company.name,
+		data: {	'Company Name': $scope.company.name,
 		    	Description: $scope.company.description, 
 		    	Website: $scope.company.Website,
 		    	Address_Headquarters: $scope.company.Address_Headquarters,
@@ -194,8 +194,8 @@ app.controller('editCompanyCtrl', function($scope, $http, $window) {
         }
     }).then(function successCallback(data) 
     		{ 
-    		console.log(data);
-    		$scope.postedJobs = data;
+    		console.log(data.data);
+    		$window.location.href = "/EmployerDashboard.html";
     		}, 
     		function err(data) 
     		{

@@ -6,8 +6,8 @@
 
 function ajaxCall(method, url, data, callback) {
 
-    console.log("In ajax call");
-    console.log(JSON.stringify(data));
+    
+    
     var httpRequest = new XMLHttpRequest();
     httpRequest.onreadystatechange = handleResponse;
     httpRequest.open(method, url);
@@ -100,7 +100,7 @@ var FreeTextSearch,SearchByCompany,SearchByLocation,SearchBySalary;
 
 function viewJobs(e,searchResponseObj) {
 	
-	alert("In view jobs");
+	
 	
 	for (var i = 0; i < searchResponseObj.length; i++) {
 
@@ -115,62 +115,55 @@ function viewJobs(e,searchResponseObj) {
 
 
          
-        var searchList = '<div style="display: flex;margin-bottom: 20px;padding: 20px;position:' +
-            ' relative" class="boxShadowSmall"> <a href="#" id = "jobTitleId"> ' +
-            jobtitle+"-"+jobid + ' </a></div> ' +
-            '<div style="display: flex;margin-bottom: 20px;padding: 20px;position:' +
-            ' relative" class="boxShadowSmall">' +
-            skill + '</div>' +
-        '<div style="display: flex;margin-bottom: 20px;padding: 20px;position:' +
-        'relative" class="boxShadowSmall">' +
-        description + '</div>' +
-        '<div style="display: flex;margin-bottom: 20px;padding: 20px;position:' +
-        'relative" class="boxShadowSmall">' +
-        location + '</div>' +
-        '<div style="display: flex;margin-bottom: 20px;padding: 20px;position:' +
-        'relative" class="boxShadowSmall">' +
-        salary + '</div>';
+        var searchList = '<br><br><p></p><div class="main-login main-center">' +
+        					'<div class="row">'+
+        	'<a href="#" id = "jobTitleId" onclick = "redirectjobviewPage(' +jobid +')">'+ (i+1) + ") " +
+            jobtitle+"-"+jobid + '</a></div></div>';
     
         
-        $(searchList).appendTo("#searchJobResults").ready(function(){
+        	$(searchList).appendTo("#searchJobResults").ready(function(){
         	
-        		var jobtitleClick = document.getElementById(jobTitleId);
-        		
-        		var jobid = jobtitleClick.innerHtml;
-        		
-        		console.log(jobid);
-        		var str = jobid.split("-");
-        		console.log(str);
-                jobtitleClick.onclick = viewJob(str[1]);
-        });
-        
-         
+        		var jobid = document.getElementById("jobTitleId");
+
+                
+        });    
     }
 }
 
 
 
-/*function viewJob(jobid) {
-    localStorage.setItem("jobId",jobid);
-    window.location = "JobView.html";
-}*/
-
-
 //load view of a particular job
+function redirectjobviewPage(jobid)
+{
+
+
+
+    window.location = "/JobView.html";
+    localStorage.setItem("jobId",jobid);
+    
+
+
+}
+
 function loadjobviewPage()
 {
 
 
-    var jobId = localStorage.getItem("jobId");
+    var jobid = localStorage.getItem("jobId");
+    
 
-    var url = "/jobs/view/"+jobId;
+    var url = "/jobs/view/"+jobid;
+    
     var jobViewRequestObj = {};
+    
     ajaxCall("GET", url , jobViewRequestObj, function (status, body) {
 
         if (status == 200) {
 
             var responseObj = JSON.parse(body);
-
+           
+            console.log(responseObj);
+            
             var jobid = responseObj["jobid"];
             var jobtitle = responseObj["jobtitle"];
             var skill = responseObj["skill"];
@@ -179,18 +172,20 @@ function loadjobviewPage()
             var salary = responseObj["salary"];
             var status = responseObj["status"];
             var company = responseObj["company"];
-
-            if (jobid!==undefined && jobid!=null) {
-                window.location.href = "JobView.html?jobid="+jobid+"&jobtitle=" + jobtitle+"&skill="+skill+"&description="+description+"&location="
-                +location+"&salary="+salary;
-                return;
-            }
-        } else {
-   
-
-            window.location.href = "Dashboard.html";
-        }
+                       
+            $('p#jobTitle').text("JobTitle : "+jobtitle);
+            $('p#skill').text("Skills : "+skill);
+            $('p#description').text("Description : "+description);
+            $('p#location').text("Location : "+location);
+            $('p#salary').text("Salary : "+salary);
+            $('p#company').text("Company : "+JSON.stringify(company));
+            
+        } 
     });
+    
+
+    
+   
 
 }
 
@@ -270,16 +265,16 @@ function interested(e) {
 }
 
 
-function editProfile(e)
+function editProfileEvent(e)
 {
+	
     e.preventDefault();
+    
     alert("In edit Profile");
-
-    e.preventDefault();
 
     var editProfile = e.target;
     var inputArray = editProfile.getElementsByTagName("input");
-
+var searchRequestObj = {};
     for (var i = 0; i < inputArray.length; i++) {
         var input = inputArray[i];
 

@@ -43,9 +43,9 @@ function  verifyUser(e) {
     		var userType = localStorage.getItem("userType")
 
             if(userType == "employer")
-            		window.location.href = "/Dashboard.html";
+            		window.location.href = "/EmployerDashboard.html";
             else if (userType == "user")
-                window.location.href = "/EmployerDashboard.html";
+                window.location.href = "/Dashboard.html";
 
         } else if (status == 403) {
         	 window.location.href = "/UserVerification.html?errorMessage=wrongCode";
@@ -186,6 +186,8 @@ function getAllUrlParams(url) {
     // get query string from url (optional) or window
     var queryString = url ? url.split('?')[1] : window.location.search.slice(1);
 
+    console.log("URL to parse is : "+queryString);
+    
     // we'll store the parameters here
     var obj = {};
 
@@ -193,12 +195,15 @@ function getAllUrlParams(url) {
     if (queryString) {
 
         // stuff after # is not part of query string, so get rid of it
-        queryString = queryString.split('&')[0];
-
+       //queryString = queryString.split('&');
+        
+       // console.log(queryString);
 
         // split our query string into its component parts
         var arr = queryString.split('&');
-
+        	console.log("Arr is ");
+        	console.log(arr);
+        	
         for (var i = 0; i < arr.length; i++) {
             // separate the keys and the values
             var a = arr[i].split('=');
@@ -241,6 +246,8 @@ function getAllUrlParams(url) {
         }
     }
 
+    console.log(JSON.stringify(obj));
+    
     return obj;
 }
 
