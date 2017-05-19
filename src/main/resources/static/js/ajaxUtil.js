@@ -207,6 +207,8 @@ function apply(e) {
     }
 
     var applyRequestObj = {};
+    jobId = localStorage.getItem("jobId");
+    
     var url = "/jobs/view/" + jobID + "/apply";
     applyRequestObj["applicationType "] = "applied";
 
@@ -247,6 +249,7 @@ function interested(e) {
 
     var applyRequestObj = {};
     applyRequestObj["applicationType "] = "interested";
+    jobID = localStorage.getItem("jobId");
     var url = "/jobs/view/" + jobID + "/apply";
     ajaxCall("POST", url, applyRequestObj, function (status, body) {
 

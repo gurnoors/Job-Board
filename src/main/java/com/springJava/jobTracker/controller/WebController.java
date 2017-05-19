@@ -6,18 +6,20 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
+import javax.mail.internet.MimeMessage;
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -33,7 +35,6 @@ import com.springJava.jobTracker.model.User;
 import com.springJava.jobTracker.repo.CompanyRepo;
 import com.springJava.jobTracker.repo.JobRepo;
 import com.springJava.jobTracker.repo.ProfileRepo;
-import com.springJava.jobTracker.repo.SpringEmailService;
 import com.springJava.jobTracker.repo.UserRepo;
 
 @RestController
@@ -50,7 +51,7 @@ public class WebController {
 	@Autowired
 	ProfileRepo profileRepo;
 	@Autowired
-	SpringEmailService springEmailService;
+    private JavaMailSender sender;
 
 	// -------- Sanity Check
 	@RequestMapping(value = "/", method = RequestMethod.GET)
@@ -91,21 +92,20 @@ public class WebController {
 		}
 		Random rand = new Random();
 		String code = String.format("%04d", rand.nextInt(10000));
-		user = new User(username, emailid, password, code); // need to encrypt
-															// password
+		user = new User(username, emailid, password, code);
 
 		userRepo.save(user);
 
 		request.getSession().setAttribute("loggedIn", "user");
 		request.getSession().setAttribute("email", emailid);
 
-		sendEmail(emailid, "verification code", "your verification code is " + user.getVerificationcode());
-		String msg = "User with id " + user.getUserid() + " is created successfully. Verification Pending....";
-		return new ResponseEntity<String>(msg, HttpStatus.CREATED); // need to
-																	// send an
-		// email
-		// notification
-		// as well.
+		try {
+			sendEmail(emailid, "Dear User,\n\nThank you for registering in Job-Borad. Your verification code is " + user.getVerificationcode() + ".\n\nThanks,\nJob-board", 
+					"Verification code from Job-Board");
+			return new ResponseEntity<String>("Email sent successfully with the verification code", HttpStatus.OK);
+		} catch(Exception ex) {
+			return new ResponseEntity<String>("Error sending email " +ex, HttpStatus.INTERNAL_SERVER_ERROR);
+		}
 	}
 
 	// job seeker & employer verification
@@ -132,8 +132,14 @@ public class WebController {
 						"Entered verification code does not match. Try Again"), HttpStatus.UNAUTHORIZED);
 			} else {
 				user.setStatus(true);
-				msg = "User with id " + user.getEmailid() + " is verified successfully";
-				sendEmail(emailid, "Welcome to the site", "you account has been verified successfully.");
+				try {
+					sendEmail(emailid, "Dear User,\n\nYour account has been verified successfully. Happy job hunting.\n\nThanks,\nJob-board", 
+							"Welcome to Job-Board");
+					return new ResponseEntity<String>("Email sent successfully", HttpStatus.OK);
+					
+				} catch (Exception e) {
+					return new ResponseEntity<String>("Error sending email " +e, HttpStatus.INTERNAL_SERVER_ERROR);
+				}
 			}
 		} else {
 			Company company = compRepo.findByEmailid(emailid);
@@ -144,8 +150,13 @@ public class WebController {
 				} else {
 					company.setStatus(true);
 					msg = "User with id " + company.getEmailid() + " is verified successfully";
-					sendEmail("anubha.mandal@sjsu.edu", "Welcome to the site",
-							"you account has been created successfully.");
+					try {
+						sendEmail("anubha.mandal@sjsu.edu", "Dear Employer,\n\nYour account has been verified successfully.\n\nThanks,\nJob-board",
+								"Welcome to Job-Board");
+						return new ResponseEntity<String>("Email sent successfully", HttpStatus.OK);
+					} catch (Exception e) {
+						return new ResponseEntity<String>("Error sending email " +e, HttpStatus.INTERNAL_SERVER_ERROR);
+					}
 				}
 			}
 		}
@@ -196,23 +207,24 @@ public class WebController {
 					new ControllerError(HttpStatus.BAD_REQUEST.value(), "Name already registered"),
 					HttpStatus.BAD_REQUEST);
 		}
+		
+		
 		Random rand = new Random();
 		String code = String.format("%04d", rand.nextInt(10000));
-		company = new Company(companyname, emailid, password, website, address, description, logo, code); // need
-																											// to
-																											// encrypt
-																											// password
+		company = new Company(companyname, emailid, password, website, address, description, logo, code);
 		compRepo.save(company);
 
 		request.getSession().setAttribute("loggedIn", "employer");
 		request.getSession().setAttribute("email", emailid);
-
-		sendEmail(emailid, "verification code", "your verification code is " + company.getVerificationcode());
-		String msg = "Employer with id " + company.getCompanyid() + " is created successfully";
-		return new ResponseEntity<>(msg, HttpStatus.CREATED); // need to send an
-																// email
-																// notification
-																// as well.
+		
+		//String msg = null;
+		try {
+			sendEmail(emailid, "Dear Employer,\n\nThank you for registering in Job-Borad. Your verification code is " + company.getVerificationcode() + ".\n\nThanks,\nJob-board", 
+					"Verification code from Job-Board");
+			return new ResponseEntity<String>("Email sent successfully with the verification code", HttpStatus.CREATED);
+		} catch(Exception ex) {
+			return new ResponseEntity<String>("Error sending email " +ex, HttpStatus.INTERNAL_SERVER_ERROR);
+		}
 	}
 
 	// Job seeker profile create -- same for update as well
@@ -250,10 +262,17 @@ public class WebController {
 		String emailid = (String) request.getSession().getAttribute("email");
 
 		User user = userRepo.findByEmailid(emailid);
+
 		if (user == null) {
 			return new ResponseEntity<ControllerError>(
 					new ControllerError(HttpStatus.NOT_FOUND.value(), "User with id " + user.getUserid() + "not found"),
 					HttpStatus.NOT_FOUND);
+
+		if( user == null)
+		{
+			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
+					"User not found"), HttpStatus.NOT_FOUND);
+
 		}
 
 		Profile profile = profileRepo.findOne(user.getUserid());
@@ -275,7 +294,8 @@ public class WebController {
 	}
 
 	// Post a job
-	@RequestMapping(value = "/jobs/post", method = { RequestMethod.POST })
+	@RequestMapping(value = "/jobs/post", method = {RequestMethod.POST})
+	
 	public ResponseEntity<?> postJob(HttpServletRequest request, HttpEntity<String> httpEntity)
 			throws UnsupportedEncodingException {
 
@@ -307,18 +327,20 @@ public class WebController {
 		Job job = new Job(job_title, skills, desc, location, salary, JobStatus.OPEN, company);
 		jobRepo.save(job);
 
-		String msg = "Job with id " + job.getJobid() + "is posted successfully";
-		return new ResponseEntity<>(msg, HttpStatus.CREATED);
+		try {
+			sendEmail(emailid, "Dear Employer,\n\nJob with id #" + job.getJobid() + " is posted successfully. Below are the job details:\nJob-Title: " +job_title+ "\nSkills: " +skills+ "\ndescription: " +desc+ "\nLocation: " +location+ ".\n\nThanks,\nJob-Borad.", 
+					"New job posted in Job-Board");
+			return new ResponseEntity<String>("Email sent successfully with the job details", HttpStatus.CREATED);
+		} catch(Exception ex) {
+			return new ResponseEntity<String>("Error sending email " +ex, HttpStatus.INTERNAL_SERVER_ERROR);
+		}
 	}
 
 	// Update a job
 	@RequestMapping(value = "/jobs/update", method = { RequestMethod.PUT })
 	public ResponseEntity<?> updateJob(HttpServletRequest request, HttpEntity<String> httpEntity)
 			throws UnsupportedEncodingException {
-		// @PathVariable("id") Long id, String job_title, String skills, String
-		// desc,
-		// String location, int salary, JobStatus status) {
-		// company id and name should be taken from company table based on login
+
 
 		request.setCharacterEncoding("UTF-8");
 		String body = httpEntity.getBody();
@@ -332,7 +354,7 @@ public class WebController {
 		String skills = jobj.get("Responsibilities").getAsString();
 		String location = jobj.get("Office Location").getAsString();
 		int salary = jobj.get("Salary").getAsInt();
-		String status_tmp = jobj.get("status").getAsString();
+		String status_tmp = jobj.get("Status").getAsString();
 
 		JobStatus status = JobStatus.OPEN;
 		if (status_tmp.equals("FILLED")) {
@@ -352,9 +374,15 @@ public class WebController {
 		}
 
 		jobRepo.updateJobDetails(job_title, skills, desc, location, salary, status, id);
+		String emailid = (String) request.getSession().getAttribute("email");
 
-		String msg = "Job with id " + id + "is updated successfully";
-		return new ResponseEntity<>(msg, HttpStatus.OK);
+		try {
+			sendEmail(emailid, "Dear Employer,\n\nJob with id " + job.getJobid() + " is updated successfully. Below are the job details:\nJob-Title: " +job_title+ "\nSkills: " +skills+ "\ndescription: " +desc+ "\nLocation: " +location+ ".\n\nThanks,\nJob-Borad.", 
+					"New job posted in Job-Board");
+			return new ResponseEntity<String>("Email sent successfully with the job details", HttpStatus.OK);
+		} catch(Exception ex) {
+			return new ResponseEntity<String>("Error sending email " +ex, HttpStatus.INTERNAL_SERVER_ERROR);
+		}
 	}
 
 	// Job search by job seeker
@@ -491,14 +519,16 @@ public class WebController {
 		return res;
 	}
 
-	public void sendEmail(String to, String subject, String text) {
-		try {
-			String from = "cmpe275.project.grp36@gmail.com";
-			springEmailService.send(from, to, subject, text);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
+	public void sendEmail(String recepient, String msg, String subject) throws Exception{
+        MimeMessage message = sender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message);
+        
+        helper.setTo(recepient);
+        helper.setText(msg);
+        helper.setSubject(subject);
+        
+        sender.send(message);
+    }
 
 	public static List<Job> my_intersect(List<Job> a, List<Job> b) {
 		List<Job> result = new ArrayList<Job>();

@@ -239,7 +239,7 @@ public class OtherController {
 
 		String subject = "Thank you for applying to " + job.getCompany().getName() + " via Job-Board";
 		try {
-			controller.sendEmail(user.getEmailid(), subject, job.getDescription());
+			controller.sendEmail(user.getEmailid(), job.getDescription(), subject);
 		} catch (Exception e) {
 			return new ResponseEntity<ControllerError>(
 					new ControllerError(HttpStatus.OK.value(), "Unable to send email. But applied to job"),
