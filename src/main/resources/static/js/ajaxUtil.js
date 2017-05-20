@@ -192,10 +192,10 @@ function loadjobviewPage()
 
 function apply(e) {
 
-
+	alert("IN apply function ");
     e.preventDefault();
     var jobID;
-    var jobDescriptionForm = e.target;
+/*    var jobDescriptionForm = e.target;
     var inputArray = jobDescriptionForm.getElementsByTagName("p");
 
     for (var i = 0; i < inputArray.length; i++) {
@@ -204,15 +204,18 @@ function apply(e) {
             jobID = input.value;
         }
 
-    }
+    }*/
 
     var applyRequestObj = {};
-    jobId = localStorage.getItem("jobId");
+    
+    jobID = localStorage.getItem("jobId");
     
     var url = "/jobs/view/" + jobID + "/apply";
+    
     applyRequestObj["applicationType "] = "applied";
-
-    ajaxCall("POST", url, applyRequestObj, function (status, body) {
+    console.log(url);
+    
+    ajaxCall("GET", url, applyRequestObj, function (status, body) {
 
         if (status == 200) {
 
@@ -236,8 +239,8 @@ function interested(e) {
 
     e.preventDefault();
     var jobID;
-    var jobDescriptionForm = e.target;
-    var inputArray = jobDescriptionForm.getElementsByTagName("p");
+    //var jobDescriptionForm = e.target;
+    /*var inputArray = jobDescriptionForm.getElementsByTagName("p");
 
     for (var i = 0; i < inputArray.length; i++) {
 
@@ -245,13 +248,18 @@ function interested(e) {
             jobID = input.value;
         }
 
-    }
+    }*/
 
     var applyRequestObj = {};
     applyRequestObj["applicationType "] = "interested";
     jobID = localStorage.getItem("jobId");
+    
     var url = "/jobs/view/" + jobID + "/apply";
-    ajaxCall("POST", url, applyRequestObj, function (status, body) {
+    
+    console.log(url);
+    
+    
+    ajaxCall("GET", url, applyRequestObj, function (status, body) {
 
         if (status == 200) {
 

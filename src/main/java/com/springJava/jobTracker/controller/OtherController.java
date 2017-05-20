@@ -185,13 +185,16 @@ public class OtherController {
 			HttpEntity<String> httpEntity) {
 		Job job = jobRepo.findOne(jobId);
 		// sanity checks
-		if (!((String) request.getSession().getAttribute("loggedIn")).equals("user")) {
+		if (!((String) request.getSession().getAttribute("loggedIn")).equals("user")
+				|| !((String) request.getSession().getAttribute("loggedIn")).equals("user")
+				) {
 			return new ResponseEntity<ControllerError>(
 					new ControllerError(HttpStatus.FORBIDDEN.value(), "User not logged in"), HttpStatus.FORBIDDEN);
 		}
 
 		// read body
 		String body = httpEntity.getBody();
+		System.out.println(body);
 		JsonElement jelem = gson.fromJson(body, JsonElement.class);
 		JsonObject jobj = jelem.getAsJsonObject();
 		String emailid = (String) request.getSession().getAttribute("email");

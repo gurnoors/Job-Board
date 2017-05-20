@@ -178,7 +178,7 @@ public class WebController {
 		String emailid = jobj.get("Email ID").getAsString();
 		String password = jobj.get("Password").getAsString();
 		String companyname = jobj.get("Company Name").getAsString();
-		;
+		
 		String website = null;
 		if (jobj.get("Website") != null) {
 			website = jobj.get("Website").getAsString();
@@ -267,6 +267,7 @@ public class WebController {
 			return new ResponseEntity<ControllerError>(
 					new ControllerError(HttpStatus.NOT_FOUND.value(), "User with id " + user.getUserid() + "not found"),
 					HttpStatus.NOT_FOUND);
+		}
 
 		if( user == null)
 		{
@@ -287,15 +288,17 @@ public class WebController {
 		}
 
 		String msg = "Profile with userid " + user.getUserid() + "is updated successfully";
+		
 		return new ResponseEntity<>(msg, HttpStatus.OK); // need to send an
 															// email
 															// notification as
 															// well.
-	}
+	
+		}
+	
 
 	// Post a job
-	@RequestMapping(value = "/jobs/post", method = {RequestMethod.POST})
-	
+	@RequestMapping(value = "/jobs/post", method = { RequestMethod.POST })
 	public ResponseEntity<?> postJob(HttpServletRequest request, HttpEntity<String> httpEntity)
 			throws UnsupportedEncodingException {
 

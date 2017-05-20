@@ -156,6 +156,8 @@ function signup(e) {
 
     ajaxCall("POST", "/employers/create", signUpRequestObj, function (status, body) {
        
+    	console.log(status);
+    	
     	if (status == 201) {
             //get userToken in auth response
             /*var responseObj = JSON.parse(body);
@@ -195,7 +197,7 @@ function getAllUrlParams(url) {
     if (queryString) {
 
         // stuff after # is not part of query string, so get rid of it
-       //queryString = queryString.split('&');
+    	queryString = queryString.split('&')[0];
         
        // console.log(queryString);
 
