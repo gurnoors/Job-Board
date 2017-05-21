@@ -12,6 +12,7 @@ function ajaxCall(method, url, data, callback) {
     httpRequest.onreadystatechange = handleResponse;
     httpRequest.open(method, url);
     httpRequest.setRequestHeader("Content-Type", "application/json");
+    
     httpRequest.send(JSON.stringify(data));
 
     function handleResponse() {
@@ -178,7 +179,7 @@ function loadjobviewPage()
             $('p#description').text("Description : "+description);
             $('p#location').text("Location : "+location);
             $('p#salary').text("Salary : "+salary);
-            $('p#company').text("Company : "+JSON.stringify(company));
+            $('p#company').text("Company : "+ company["name"]);
             
         } 
     });
@@ -210,12 +211,14 @@ function apply(e) {
     
     jobID = localStorage.getItem("jobId");
     
-    var url = "/jobs/view/" + jobID + "/apply";
+    var url = "/jobs/view/" + Number(jobID) + "/apply";
     
-    applyRequestObj["applicationType "] = "applied";
+    applyRequestObj["applicationType"] = "applied";
+    applyRequestObj["Resume"] = "";
+    
     console.log(url);
     
-    ajaxCall("GET", url, applyRequestObj, function (status, body) {
+    ajaxCall("POST", url, applyRequestObj, function (status, body) {
 
         if (status == 200) {
 
