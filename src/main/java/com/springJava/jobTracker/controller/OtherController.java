@@ -120,14 +120,15 @@ public class OtherController {
 				responseStatus = HttpStatus.NOT_FOUND;
 			}
 		}
-		
+
 		ResponseEntity<String> responseEntity = null;
-		if(isUser){
-			responseEntity = new ResponseEntity<String>("user", responseStatus);;  
-		}else{
+		if (isUser) {
+			responseEntity = new ResponseEntity<String>("user", responseStatus);
+			;
+		} else {
 			responseEntity = new ResponseEntity<String>("employer", responseStatus);
 		}
-		
+
 		return responseEntity;
 	}
 
@@ -185,9 +186,8 @@ public class OtherController {
 			HttpEntity<String> httpEntity) {
 		Job job = jobRepo.findOne(jobId);
 		// sanity checks
-		if (!((String) request.getSession().getAttribute("loggedIn")).equals("user")
-				|| !((String) request.getSession().getAttribute("loggedIn")).equals("user")
-				) {
+		if (request.getSession().getAttribute("loggedIn") == null
+				|| !((String) request.getSession().getAttribute("loggedIn")).equals("user")) {
 			return new ResponseEntity<ControllerError>(
 					new ControllerError(HttpStatus.FORBIDDEN.value(), "User not logged in"), HttpStatus.FORBIDDEN);
 		}
@@ -242,7 +242,8 @@ public class OtherController {
 
 		String subject = "Thank you for applying to " + job.getCompany().getName() + " via Job-Board";
 		try {
-			controller.sendEmail(user.getEmailid(), "You successfully applied to the job. Below is the description.\n" + job.getDescription(), subject);
+			controller.sendEmail(user.getEmailid(),
+					"You successfully applied to the job. Below is the description.\n" + job.getDescription(), subject);
 		} catch (Exception e) {
 			return new ResponseEntity<ControllerError>(
 					new ControllerError(HttpStatus.OK.value(), "Unable to send email. But applied to job"),
@@ -265,8 +266,7 @@ public class OtherController {
 	 */
 	@RequestMapping(value = "/employers/update", method = { RequestMethod.PUT })
 	@ResponseBody
-	public ResponseEntity<?> updateCompany(HttpServletRequest request, 
-			HttpEntity<String> httpEntity) {
+	public ResponseEntity<?> updateCompany(HttpServletRequest request, HttpEntity<String> httpEntity) {
 		if (request.getSession().getAttribute("loggedIn") == null
 				|| !((String) request.getSession().getAttribute("loggedIn")).equals("employer")) {
 			return new ResponseEntity<ControllerError>(
@@ -275,12 +275,13 @@ public class OtherController {
 		String email = (String) request.getSession().getAttribute("email");
 		Company company = compRepo.findByEmailid(email);
 		if (company == null) {
-			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
-					"Company with emailid " + email + " Not found"), HttpStatus.NOT_FOUND);
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.NOT_FOUND.value(), "Company with emailid " + email + " Not found"),
+					HttpStatus.NOT_FOUND);
 		}
 
-		String body = httpEntity.getBody();
 		// read body
+		String body = httpEntity.getBody();
 		JsonElement jelem = gson.fromJson(body, JsonElement.class);
 		JsonObject jobj = jelem.getAsJsonObject();
 
@@ -315,7 +316,9 @@ public class OtherController {
 	public ResponseEntity<?> getAllJobsForEmployer(HttpServletRequest request) {
 		System.out.println("isLogged IN --> " + (String) request.getSession().getAttribute("employer"));
 		System.out.println((String) request.getSession().getAttribute("email"));
-		if (!((String) request.getSession().getAttribute("loggedIn")).equals("employer")) {
+
+		if (request.getSession().getAttribute("loggedIn") == null
+				|| !((String) request.getSession().getAttribute("loggedIn")).equals("employer")) {
 			return new ResponseEntity<ControllerError>(
 					new ControllerError(HttpStatus.FORBIDDEN.value(), "Employer not logged in"), HttpStatus.FORBIDDEN);
 		}
@@ -325,6 +328,70 @@ public class OtherController {
 		List<Job> jobs = company.getJobs();
 
 		return new ResponseEntity<List<Job>>(jobs, HttpStatus.OK);
+	}
+
+	/**
+	 * 16) Employer - Process Application [POST] 
+	 * Request:{ “application_id”: 1
+	 * “status”: “OFFERED/REJECTED” }
+	 * 
+	 * @param request
+	 * @param httpEntity
+	 * @return
+	 */
+	@RequestMapping(value = "/employer/processApplication", method = { RequestMethod.POST })
+	@ResponseBody
+	public ResponseEntity<?> processApplication(HttpServletRequest request, HttpEntity<String> httpEntity) {
+		System.out.println("isLogged IN --> " + (String) request.getSession().getAttribute("employer"));
+		System.out.println((String) request.getSession().getAttribute("email"));
+
+		if (request.getSession().getAttribute("loggedIn") == null
+				|| !((String) request.getSession().getAttribute("loggedIn")).equals("employer")) {
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.FORBIDDEN.value(), "Employer not logged in"), HttpStatus.FORBIDDEN);
+		}
+
+		// read body
+		String body = httpEntity.getBody();
+		JsonElement jelem = gson.fromJson(body, JsonElement.class);
+		JsonObject jobj = jelem.getAsJsonObject();
+
+		JsonElement application_id = jobj.get("application_id");
+		JsonElement status = jobj.get("status");
+
+		if (application_id == null) {
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.BAD_REQUEST.value(), "application_id is null"),
+					HttpStatus.BAD_REQUEST);
+		}
+		if (status == null) {
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.BAD_REQUEST.value(), "status is null"), HttpStatus.BAD_REQUEST);
+		}
+
+		Application application = appRepo.findOne(application_id.getAsLong());
+		if (application == null) {
+			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
+					"Application with application_id " + String.valueOf(application_id.getAsLong()) + " not found"),
+					HttpStatus.NOT_FOUND);
+		}
+		ApplicationStatus applicationStatus = null;
+		switch (status.getAsString().toUpperCase()) {
+		case "OFFERED":
+			applicationStatus = ApplicationStatus.OFFERED;
+			break;
+		case "REJECTED":
+			applicationStatus = ApplicationStatus.REJECTED;
+			break;
+		default:
+			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.BAD_REQUEST.value(),
+					"application_status can only have the values: OFFERED, REJECTED in this endpoint\n"
+							+ "Supplied value: " + status.getAsString()),
+					HttpStatus.BAD_REQUEST);
+		}
+		application.setStatus(applicationStatus);
+		appRepo.save(application);
+		return new ResponseEntity<>(HttpStatus.OK);
 	}
 
 }
