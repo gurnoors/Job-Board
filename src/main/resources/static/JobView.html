@@ -19,10 +19,12 @@
 
     <script type="text/javascript" src="js/auth.js"></script>
     <script type="text/javascript" src="js/ajaxUtil.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
 </head>
 
 
-<body>
+<body onload = "loadjobviewPage()">
 
 <div class="container">
     <h1>Apply/View Job</h1>
@@ -35,14 +37,18 @@
 
             <form class="form-horizontal" name = "jobDescriptionForm">
 
-                <p name = "jobid" id = "jobid"></p>
-               Job Title <p id = "jobTitle"></p>
-                Skill <p id = "skill"> </p>
-               Description <p id = "description"> </p>
-              Location  <p id = "location"> </p>
-               Salary <p id = "salary"> </p>
-              Company  <p id = "company"></p>
-
+                <div id = "jobViewPage">
+                <div id = "JobDetail"> 
+                
+                <p id = "jobTitle"></p>
+                <p id = "skill"> </p> 
+    			<p id = "description"> </p>
+     			<p id = "location"> </p>
+      			<p id = "salary"> </p>
+     			<p id = "company"></p>
+     			</div>
+                </div>
+	
                 <div class="form-group">
                     <label class="col-md-3 control-label"></label>
                     <div class="col-md-8">
@@ -57,32 +63,12 @@
     </div>
 </div>
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+
+
 <script>
 
-    window.onload=loadjobviewPage();
-
-if(loadjobviewPage()) {
-
-    var obj = getAllUrlParams(window.location.href);
-
-    var jobid = obj["jobid"];
-    var jobTitle = obj["jobtitle"];
-    var skill = obj["skill"];
-    var description = obj["description"];
-    var location = obj["location"];
-    var salary = obj["salary"];
-
-    document.getElementById("jobTitle").innerHTML = jobTitle;
-    document.getElementById("skill").innerHTML = skill;
-    document.getElementById("description").innerHTML = description;
-    document.getElementById("location").innerHTML = location;
-    document.getElementById("salary").innerHTML = salary;
-}
-else if(!loadjobviewPage()){
-    
-}
-
+	
 </script>
 
 

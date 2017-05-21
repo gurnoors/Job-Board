@@ -179,19 +179,22 @@ public class OtherController {
 	 * @param jobId
 	 * @return
 	 */
-	@RequestMapping(value = "/jobs/view/{jobId}/apply", method = { RequestMethod.POST })
+	@RequestMapping(value = "/jobs/view/{jobId}/apply", method = { RequestMethod.GET })
 	@ResponseBody
 	public ResponseEntity<?> applyForJob(HttpServletRequest request, @PathVariable Long jobId,
 			HttpEntity<String> httpEntity) {
 		Job job = jobRepo.findOne(jobId);
 		// sanity checks
-		if (!((String) request.getSession().getAttribute("loggedIn")).equals("user")) {
+		if (!((String) request.getSession().getAttribute("loggedIn")).equals("user")
+				|| !((String) request.getSession().getAttribute("loggedIn")).equals("user")
+				) {
 			return new ResponseEntity<ControllerError>(
 					new ControllerError(HttpStatus.FORBIDDEN.value(), "User not logged in"), HttpStatus.FORBIDDEN);
 		}
 
 		// read body
 		String body = httpEntity.getBody();
+		System.out.println(body);
 		JsonElement jelem = gson.fromJson(body, JsonElement.class);
 		JsonObject jobj = jelem.getAsJsonObject();
 		String emailid = (String) request.getSession().getAttribute("email");
@@ -239,7 +242,7 @@ public class OtherController {
 
 		String subject = "Thank you for applying to " + job.getCompany().getName() + " via Job-Board";
 		try {
-			controller.sendEmail(user.getEmailid(), subject, job.getDescription());
+			controller.sendEmail(user.getEmailid(), "You successfully applied to the job. Below is the description.\n" + job.getDescription(), subject);
 		} catch (Exception e) {
 			return new ResponseEntity<ControllerError>(
 					new ControllerError(HttpStatus.OK.value(), "Unable to send email. But applied to job"),
