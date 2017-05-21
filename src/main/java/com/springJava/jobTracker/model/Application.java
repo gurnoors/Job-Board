@@ -19,11 +19,11 @@ public class Application {
 	@Column(unique = true, nullable = false)
 	private Long applicationid;
 
-	@OneToOne(fetch=FetchType.LAZY)
+	@OneToOne(fetch=FetchType.EAGER)
 	@JoinColumn(name="userid")
 	private User user;
 
-	@OneToOne(fetch=FetchType.LAZY)
+	@OneToOne(fetch=FetchType.EAGER)
 	@JoinColumn(name="jobid")
 	private Job job;
 
