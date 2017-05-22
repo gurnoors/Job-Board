@@ -45,7 +45,7 @@ function  verifyUser(e) {
             if(userType == "employer")
             		window.location.href = "/EmployerDashboard.html";
             else if (userType == "user")
-                window.location.href = "/index.html";
+                window.location.href = "/Dashboard.html";
 
         } else if (status == 403) {
         	 window.location.href = "/UserVerification.html?errorMessage=wrongCode";
