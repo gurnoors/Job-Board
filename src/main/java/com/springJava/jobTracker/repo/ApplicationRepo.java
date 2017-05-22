@@ -25,4 +25,5 @@ public interface ApplicationRepo extends CrudRepository<Application, Long> {
 	List<Application> findByStatusAndJob(ApplicationStatus status, Job job);
 	List<Application> findByJob(Job job);
 	List<Application> findByUserAndType(User user, ApplicationType type);
+	Application findByJobAndUser(Job job, User user);
 }
