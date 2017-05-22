@@ -271,15 +271,8 @@ public class WebController {
 
 		if (user == null) {
 			return new ResponseEntity<ControllerError>(
-					new ControllerError(HttpStatus.NOT_FOUND.value(), "User with id " + user.getUserid() + "not found"),
+					new ControllerError(HttpStatus.NOT_FOUND.value(), "User with emailid " + emailid + "not found"),
 					HttpStatus.NOT_FOUND);
-		}
-
-		if( user == null)
-		{
-			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
-					"User not found"), HttpStatus.NOT_FOUND);
-
 		}
 
 		Profile profile = profileRepo.findOne(user.getUserid());
@@ -381,57 +374,62 @@ public class WebController {
 	
 	
 	//----------- Update a job Status by employer - filled/cancelled ----------
-		@RequestMapping(value = "/jobs/updateStatus", method = { RequestMethod.PUT })
-		public ResponseEntity<?> updateJobStatus(HttpServletRequest request, HttpEntity<String> httpEntity)
-				throws UnsupportedEncodingException {
+	@RequestMapping(value = "/jobs/updateStatus", method = { RequestMethod.PUT })
+	public ResponseEntity<?> updateJobStatus(HttpServletRequest request, HttpEntity<String> httpEntity)
+			throws UnsupportedEncodingException {
 
-			request.setCharacterEncoding("UTF-8");
-			String body = httpEntity.getBody();
+		request.setCharacterEncoding("UTF-8");
+		String body = httpEntity.getBody();
 
-			// read body
-			JsonElement jelem = gson.fromJson(body, JsonElement.class);
-			JsonObject jobj = jelem.getAsJsonObject();
-			Long id = jobj.get("id").getAsLong();
-			String status_tmp = jobj.get("Status").getAsString();
-			
-			Job job = jobRepo.findOne(id);
-			if (job == null) {
-				return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
-						"Job with id" +id + "Not found"), HttpStatus.NOT_FOUND);
-			}
-	
-			JobStatus status = JobStatus.OPEN;
-			if (status_tmp.equals("FILLED")){
-				status = JobStatus.FILLED;
-				List<Application> appList = appRepo.findByStatusAndJob(ApplicationStatus.PENDING, job);
+		// read body
+		JsonElement jelem = gson.fromJson(body, JsonElement.class);
+		JsonObject jobj = jelem.getAsJsonObject();
+		Long jobid = jobj.get("id").getAsLong();
+		String status_tmp = jobj.get("Status").getAsString();
+		
+		Job job = jobRepo.findOne(jobid);
+		if (job == null) {
+			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
+					"Job with id" +jobid + "Not found"), HttpStatus.NOT_FOUND);
+		}
+		System.out.println("I m here 1");
+		JobStatus status = JobStatus.OPEN;
+		if (status_tmp.equals("FILLED")){
+			status = JobStatus.FILLED;
+			List<Application> appList = appRepo.findByStatusAndJob(ApplicationStatus.PENDING, job);
+			System.out.println("I m here 2");
+			if(!appList.isEmpty()){
 				for(Application a : appList){
+					System.out.println("I m here 3");
 					appRepo.updateApplicationStatus_JS(ApplicationStatus.FILLED, a.getApplicationid());
 				}
 			}
-			else if (status_tmp.equals("CANCELLED")){
-				status = JobStatus.CANCELLED;
-				List<Application> appList = appRepo.findByStatusAndJob(ApplicationStatus.OFFER_ACCEPTED, job);
-				if(!appList.isEmpty()){
-					return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.FORBIDDEN.value(),
-							"Job cannot be cancelled, one or more offers accepted."), HttpStatus.FORBIDDEN);
-				}
-			}
-			else {
-				return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.BAD_REQUEST.value(),
-						"Not a valid Status, only FILLED/ CANCELLED are allowed"), HttpStatus.BAD_REQUEST);
-			}
-
-			jobRepo.updateJobStatus(status, id);
-			String emailid = (String) request.getSession().getAttribute("email");
-			
-			try {
-				sendEmail(emailid, "Dear Employer,\n\nJob status with id " + job.getJobid() + " is updated successfully to " + status + ". Below are the job details:\nJob-Title: " +job.getJobtitle()+ "\ndescription: " +job.getDescription()+ ".\n\nThanks,\nJob-Borad.", 
-						"Job with id " + id + " updated in Job-Board");
-				return new ResponseEntity<String>("Email sent successfully with the job details", HttpStatus.OK);
-			} catch(Exception ex) {
-				return new ResponseEntity<String>("Error sending email " +ex, HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		else if (status_tmp.equals("CANCELLED")){
+			status = JobStatus.CANCELLED;
+			System.out.println("I m here 4");
+			List<Application> appList = appRepo.findByStatusAndJob(ApplicationStatus.OFFER_ACCEPTED, job);
+			if(!appList.isEmpty()){
+				return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.FORBIDDEN.value(),
+						"Job cannot be cancelled, one or more offers accepted."), HttpStatus.FORBIDDEN);
 			}
 		}
+		else {
+			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.BAD_REQUEST.value(),
+					"Not a valid Status, only FILLED/ CANCELLED are allowed"), HttpStatus.BAD_REQUEST);
+		}
+		System.out.println("I m here 5");
+		jobRepo.updateJobStatus(status, jobid);
+		String emailid = (String) request.getSession().getAttribute("email");
+		
+		try {
+			sendEmail(emailid, "Dear Employer,\n\nJob status with id " + job.getJobid() + " is updated successfully to " + status + ". Below are the job details:\nJob-Title: " +job.getJobtitle()+ "\ndescription: " +job.getDescription()+ ".\n\nThanks,\nJob-Borad.", 
+					"Job with id " + jobid + " updated in Job-Board");
+			return new ResponseEntity<String>("Email sent successfully with the job details", HttpStatus.OK);
+		} catch(Exception ex) {
+			return new ResponseEntity<String>("Error sending email " +ex, HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+	}
 
 		
 	//------- Get all the applications of job for employer ------------	
@@ -456,7 +454,7 @@ public class WebController {
 		for (Application a : appList){
 			User u = userRepo.findOne(a.getUser().getUserid());
 			Profile p = profileRepo.findOne(u.getUserid());
-			GetApplicants tmp = new GetApplicants(a.getApplicationid(), a.getStatus(), p.getFirstname(), p.getLastname());
+			GetApplicants tmp = new GetApplicants(u.getEmailid(), a.getStatus(), p.getFirstname(), p.getLastname());
 			resList.add(tmp);
 		}
 		ResponseEntity<List<GetApplicants>> response = new ResponseEntity<List<GetApplicants>>(resList, HttpStatus.OK);
@@ -672,24 +670,24 @@ public class WebController {
 	
 	// Custom Classes
 	public class GetApplicants{
-	   private Long id;
+	   private String emailid;
 	   private ApplicationStatus status;
 	   private String firstname;
 	   private String lastname;
 	   
-	   public GetApplicants(Long id, ApplicationStatus status, String firstname, String lastname)
+	   public GetApplicants(String emailid, ApplicationStatus status, String firstname, String lastname)
 	   {
-	      this.id = id;
+	      this.emailid = emailid;
 	      this.status = status;
 	      this.firstname = firstname;
 	      this.lastname = lastname;
 	   }
-	   public Long getId() {
-			return id;
+	   public String getEmailid() {
+			return emailid;
 		}
 
-		public void setId(Long id) {
-			this.id = id;
+		public void setEmailid(String emailid) {
+			this.emailid = emailid;
 		}
 		public ApplicationStatus getStatus() {
 			return status;
