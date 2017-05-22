@@ -429,47 +429,56 @@ public class OtherController {
 		System.out.println("isLogged IN --> " + (String) request.getSession().getAttribute("loggedIn"));
 		System.out.println((String) request.getSession().getAttribute("email"));
 
+		// sanity checks
 		if (request.getSession().getAttribute("loggedIn") == null
 				|| !((String) request.getSession().getAttribute("loggedIn")).equals("user")) {
 			return new ResponseEntity<ControllerError>(
 					new ControllerError(HttpStatus.FORBIDDEN.value(), "User not logged in"), HttpStatus.FORBIDDEN);
 		}
-
 		// read body
 		String body = httpEntity.getBody();
 		JsonElement jelem = gson.fromJson(body, JsonElement.class);
 		JsonObject jobj = jelem.getAsJsonObject();
-
-		JsonElement application_id = jobj.get("application_id");
+		JsonElement jobid = jobj.get("jobid");
 		JsonElement status = jobj.get("status");
-
-		if (application_id == null) {
+		if (jobid == null) {
 			return new ResponseEntity<ControllerError>(
-					new ControllerError(HttpStatus.BAD_REQUEST.value(), "application_id is null"),
-					HttpStatus.BAD_REQUEST);
+					new ControllerError(HttpStatus.BAD_REQUEST.value(), "jobid is null"), HttpStatus.BAD_REQUEST);
 		}
 		if (status == null) {
 			return new ResponseEntity<ControllerError>(
 					new ControllerError(HttpStatus.BAD_REQUEST.value(), "status is null"), HttpStatus.BAD_REQUEST);
 		}
-
-		Application application = appRepo.findOne(application_id.getAsLong());
-		if (application == null) {
+		String emailid = (String) request.getSession().getAttribute("email");
+		User user = userRepo.findByEmailid(emailid);
+		Job job = jobRepo.findOne(jobid.getAsLong());
+		if (job == null) {
 			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
-					"Application with application_id " + String.valueOf(application_id.getAsLong()) + " not found"),
+					"Job with ID " + String.valueOf(jobid.getAsLong()) + " not found"), HttpStatus.NOT_FOUND);
+		}
+
+		// retrieve application object
+		Application application = appRepo.findByJobAndUser(job, user);
+		if (application == null) {
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.NOT_FOUND.value(), "User with email ID " + emailid
+							+ " has not applied to job id " + String.valueOf(jobid.getAsLong())),
 					HttpStatus.NOT_FOUND);
 		}
 		ApplicationStatus applicationStatus = null;
 		switch (status.getAsString().toUpperCase()) {
-		case "OFFERED":
-			applicationStatus = ApplicationStatus.OFFERED;
+		case "OFFER_ACCEPTED":
+			applicationStatus = ApplicationStatus.OFFER_ACCEPTED;
 			break;
-		case "REJECTED":
-			applicationStatus = ApplicationStatus.REJECTED;
+		case "OFFER_REJECTED":
+			applicationStatus = ApplicationStatus.OFFER_REJECTED;
+			break;
+		case "CANCELLED":
+			applicationStatus = ApplicationStatus.CANCELLED;
 			break;
 		default:
 			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.BAD_REQUEST.value(),
-					"application_status can only have the values: OFFERED, REJECTED in this endpoint\n"
+					"application_status can only have the values: OFFER_ACCEPTED, OFFER_REJECTED or CANCELLED in this endpoint\n"
 							+ "Supplied value: " + status.getAsString()),
 					HttpStatus.BAD_REQUEST);
 		}
