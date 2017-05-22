@@ -236,8 +236,8 @@ public class OtherController {
 			type = ApplicationType.APPLIED;
 		}
 		Application application = new Application(user, job, type, status);
-		
-		//TODO: catch duplicate row/ unique constraint fail 
+
+		// TODO: catch duplicate row/ unique constraint fail
 		appRepo.save(application);
 
 		String subject = "Thank you for applying to " + job.getCompany().getName() + " via Job-Board";
@@ -331,9 +331,8 @@ public class OtherController {
 	}
 
 	/**
-	 * 16) Employer - Process Application [POST] 
-	 * Request:{ “application_id”: 1
-	 * “status”: “OFFERED/REJECTED” }
+	 * 16) Employer - Process Application [POST] Request:{ “emailid”:
+	 * “foo@bar.com”, “jobid”: 1, “status”: “OFFERED/REJECTED” }
 	 * 
 	 * @param request
 	 * @param httpEntity
@@ -342,7 +341,10 @@ public class OtherController {
 	@RequestMapping(value = "/employer/processApplication", method = { RequestMethod.POST })
 	@ResponseBody
 	public ResponseEntity<?> empProcessApplication(HttpServletRequest request, HttpEntity<String> httpEntity) {
-		//TODO: resolve state meanings, add FILLED state here, later - parse enum from JsonObject gson
+		// TODO: verify employer, i.e make sure that the employer (loggedIn), is
+		// only able to modify the jobs posted by their company
+		// TODO: resolve state meanings, add FILLED state here, later - parse
+		// enum from JsonObject gson
 		System.out.println("isLogged IN --> " + (String) request.getSession().getAttribute("loggedIn"));
 		System.out.println((String) request.getSession().getAttribute("email"));
 
@@ -357,23 +359,39 @@ public class OtherController {
 		JsonElement jelem = gson.fromJson(body, JsonElement.class);
 		JsonObject jobj = jelem.getAsJsonObject();
 
-		JsonElement application_id = jobj.get("application_id");
+		JsonElement emailid = jobj.get("emailid");
 		JsonElement status = jobj.get("status");
+		JsonElement jobid = jobj.get("jobid");
 
-		if (application_id == null) {
+		if (emailid == null) {
 			return new ResponseEntity<ControllerError>(
-					new ControllerError(HttpStatus.BAD_REQUEST.value(), "application_id is null"),
-					HttpStatus.BAD_REQUEST);
+					new ControllerError(HttpStatus.BAD_REQUEST.value(), "emailid is null"), HttpStatus.BAD_REQUEST);
 		}
 		if (status == null) {
 			return new ResponseEntity<ControllerError>(
 					new ControllerError(HttpStatus.BAD_REQUEST.value(), "status is null"), HttpStatus.BAD_REQUEST);
 		}
+		if (jobid == null) {
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.BAD_REQUEST.value(), "jobid is null"), HttpStatus.BAD_REQUEST);
+		}
 
-		Application application = appRepo.findOne(application_id.getAsLong());
-		if (application == null) {
+		User user = userRepo.findByEmailid(emailid.getAsString());
+		if (user == null) {
 			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
-					"Application with application_id " + String.valueOf(application_id.getAsLong()) + " not found"),
+					"User with email ID " + emailid.getAsString() + " not found"), HttpStatus.NOT_FOUND);
+		}
+
+		Job job = jobRepo.findOne(jobid.getAsLong());
+		if (job == null) {
+			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
+					"Job with id " + String.valueOf(jobid.getAsLong()) + " not found"), HttpStatus.NOT_FOUND);
+		}
+		Application application = appRepo.findByJobAndUser(job, user);
+		if (application == null) {
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.NOT_FOUND.value(), "User with email ID " + emailid
+							+ " has not applied to job id " + String.valueOf(jobid.getAsLong())),
 					HttpStatus.NOT_FOUND);
 		}
 		ApplicationStatus applicationStatus = null;
@@ -394,10 +412,9 @@ public class OtherController {
 		appRepo.save(application);
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
-	
+
 	/**
-	 * 17) User - Process Application [POST]
-	 * Request:{ “application_id”: 1
+	 * 17) User - Process Application [POST] Request:{ “application_id”: 1
 	 * “status”: “CANCELLED/OFFER_ACCEPTED/OFFER_REJECTED” }
 	 * 
 	 * @param request
@@ -407,53 +424,61 @@ public class OtherController {
 	@RequestMapping(value = "/user/processApplication", method = { RequestMethod.POST })
 	@ResponseBody
 	public ResponseEntity<?> userProcessApplication(HttpServletRequest request, HttpEntity<String> httpEntity) {
-		//TODO: mustDo !!!!!!copy pasted method, wrong
-		
-		
+		// TODO: mustDo !!!!!!copy pasted method, wrong
+
 		System.out.println("isLogged IN --> " + (String) request.getSession().getAttribute("loggedIn"));
 		System.out.println((String) request.getSession().getAttribute("email"));
 
+		// sanity checks
 		if (request.getSession().getAttribute("loggedIn") == null
-				|| !((String) request.getSession().getAttribute("loggedIn")).equals("employer")) {
+				|| !((String) request.getSession().getAttribute("loggedIn")).equals("user")) {
 			return new ResponseEntity<ControllerError>(
-					new ControllerError(HttpStatus.FORBIDDEN.value(), "Employer not logged in"), HttpStatus.FORBIDDEN);
+					new ControllerError(HttpStatus.FORBIDDEN.value(), "User not logged in"), HttpStatus.FORBIDDEN);
 		}
-
 		// read body
 		String body = httpEntity.getBody();
 		JsonElement jelem = gson.fromJson(body, JsonElement.class);
 		JsonObject jobj = jelem.getAsJsonObject();
-
-		JsonElement application_id = jobj.get("application_id");
+		JsonElement jobid = jobj.get("jobid");
 		JsonElement status = jobj.get("status");
-
-		if (application_id == null) {
+		if (jobid == null) {
 			return new ResponseEntity<ControllerError>(
-					new ControllerError(HttpStatus.BAD_REQUEST.value(), "application_id is null"),
-					HttpStatus.BAD_REQUEST);
+					new ControllerError(HttpStatus.BAD_REQUEST.value(), "jobid is null"), HttpStatus.BAD_REQUEST);
 		}
 		if (status == null) {
 			return new ResponseEntity<ControllerError>(
 					new ControllerError(HttpStatus.BAD_REQUEST.value(), "status is null"), HttpStatus.BAD_REQUEST);
 		}
-
-		Application application = appRepo.findOne(application_id.getAsLong());
-		if (application == null) {
+		String emailid = (String) request.getSession().getAttribute("email");
+		User user = userRepo.findByEmailid(emailid);
+		Job job = jobRepo.findOne(jobid.getAsLong());
+		if (job == null) {
 			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
-					"Application with application_id " + String.valueOf(application_id.getAsLong()) + " not found"),
+					"Job with ID " + String.valueOf(jobid.getAsLong()) + " not found"), HttpStatus.NOT_FOUND);
+		}
+
+		// retrieve application object
+		Application application = appRepo.findByJobAndUser(job, user);
+		if (application == null) {
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.NOT_FOUND.value(), "User with email ID " + emailid
+							+ " has not applied to job id " + String.valueOf(jobid.getAsLong())),
 					HttpStatus.NOT_FOUND);
 		}
 		ApplicationStatus applicationStatus = null;
 		switch (status.getAsString().toUpperCase()) {
-		case "OFFERED":
-			applicationStatus = ApplicationStatus.OFFERED;
+		case "OFFER_ACCEPTED":
+			applicationStatus = ApplicationStatus.OFFER_ACCEPTED;
 			break;
-		case "REJECTED":
-			applicationStatus = ApplicationStatus.REJECTED;
+		case "OFFER_REJECTED":
+			applicationStatus = ApplicationStatus.OFFER_REJECTED;
+			break;
+		case "CANCELLED":
+			applicationStatus = ApplicationStatus.CANCELLED;
 			break;
 		default:
 			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.BAD_REQUEST.value(),
-					"application_status can only have the values: OFFERED, REJECTED in this endpoint\n"
+					"application_status can only have the values: OFFER_ACCEPTED, OFFER_REJECTED or CANCELLED in this endpoint\n"
 							+ "Supplied value: " + status.getAsString()),
 					HttpStatus.BAD_REQUEST);
 		}
@@ -461,17 +486,18 @@ public class OtherController {
 		appRepo.save(application);
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
-	
+
 	/**
-	 * 20) Application Status of a job id for the logged-in user [GET]
-	 * OR, get Application object
+	 * 20) Application Status of a job id for the logged-in user [GET] OR, get
+	 * Application object
+	 * 
 	 * @param jobId
 	 * @return
 	 */
 	@RequestMapping(value = "/user/{jobId}/getApplicationStatus", method = { RequestMethod.GET })
 	public ResponseEntity<?> getApplicationStatus(HttpServletRequest request, @PathVariable Long jobId) {
-		
-		//sanity checks
+
+		// sanity checks
 		System.out.println("isLogged IN --> " + (String) request.getSession().getAttribute("loggedIn"));
 		System.out.println((String) request.getSession().getAttribute("email"));
 		if (request.getSession().getAttribute("loggedIn") == null
@@ -484,18 +510,15 @@ public class OtherController {
 			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(), "Not found"),
 					HttpStatus.NOT_FOUND);
 		}
-		
+
 		String email = (String) request.getSession().getAttribute("email");
-		User user = userRepo.findByEmailid(email);//loggedIn user cannot be null
+		User user = userRepo.findByEmailid(email);// loggedIn user cannot be
+													// null
 		Application application = appRepo.findByJobAndUser(job, user);
-		if(application == null){
+		if (application == null) {
 			return new ResponseEntity<String>("null", HttpStatus.OK);
 		}
 		return new ResponseEntity<Application>(application, HttpStatus.OK);
 	}
-	
-	
-	
-	
 
 }
