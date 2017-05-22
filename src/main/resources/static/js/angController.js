@@ -13,19 +13,24 @@ app.controller('jobSeekerSignUpCtrl', function($scope, $http, $window) {
             method: 'POST',
             transformResponse: function (data, headersGetter, status) 
             					{ 
-            						if(status=='201')
+            						if(status=='200')
             						{	
             							console.log("sample");
             							return data;
             						}
-            						else{
+            						else if(status=='400')
+            						{
             							data= JSON.parse(data);
+            							console.log(data);
+            							return data;
+            						}
+            						else{
             							return data;
             						}; 
             					
             					},
             data: {	 username: $scope.user.name , 
-					 emailid: $scope.user.email ,
+            		 emailID: $scope.user.email ,
 					 password: $scope.user.password
             }
         }).then(function successCallback(data) 
