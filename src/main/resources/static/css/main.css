@@ -122,11 +122,26 @@ input[type=radio]:not(old){
     .sidenav a {font-size: 18px;}
 }
 
+.empDashBoardcontainer {
+border: 12px solid #B22222;
+border-radius: 10px;
+margin: auto;
+}
+
+#rcorners2 {
+    border-radius: 25px;
+    border: 2px solid #73AD21;
+    padding: 20px; 
+    width: 200px;
+    height: 150px;    
+}
+
 table {
-   border: 1px solid black;
-   width: 100%
+    border-collapse: collapse;
+    table-layout: fixed;
 }
-th, td {
-   border: 1px solid black;
-   width: 100%
+
+table {
+    border: 1px solid black;
 }
+

@@ -30,7 +30,7 @@ public interface JobRepo extends CrudRepository<Job, Long>{
 	
 	@Transactional
     @Modifying(clearAutomatically = true)
-	@Query("update Job p set p.status=?1 where p.id=?6")
-	void updateJobStatus(JobStatus status, Long id);
+	@Query("update Job p set p.status=?1 where p.jobid=?2")
+	void updateJobStatus(JobStatus status, Long jobid);
 
 }

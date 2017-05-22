@@ -12,6 +12,7 @@ function ajaxCall(method, url, data, callback) {
     httpRequest.onreadystatechange = handleResponse;
     httpRequest.open(method, url);
     httpRequest.setRequestHeader("Content-Type", "application/json");
+    
     httpRequest.send(JSON.stringify(data));
 
     function handleResponse() {
@@ -67,7 +68,7 @@ var FreeTextSearch,SearchByCompany,SearchByLocation,SearchBySalary;
 
     var url = "/jobs/search/"+FreeTextSearch+"/"+SearchByCompany+"/"+SearchByLocation+"/"+SearchBySalary;
     
-    alert(url);
+    console.log(url);
     
     var searchRequestObj = {};
     
@@ -101,6 +102,12 @@ var FreeTextSearch,SearchByCompany,SearchByLocation,SearchBySalary;
 function viewJobs(e,searchResponseObj) {
 	
 	
+	$('#searchJobResults').empty();
+	
+	
+	var headerResult = '<div class="panel-title text-center"><h1 class="title"> Search Results </h1></div>';
+	
+	$(headerResult).appendTo("#searchJobResults");
 	
 	for (var i = 0; i < searchResponseObj.length; i++) {
 
@@ -114,21 +121,174 @@ function viewJobs(e,searchResponseObj) {
 
 
 
-         
-        var searchList = '<br><br><p></p><div class="main-login main-center">' +
-        					'<div class="row">'+
-        	'<a href="#" id = "jobTitleId" onclick = "redirectjobviewPage(' +jobid +')">'+ (i+1) + ") " +
-            jobtitle+"-"+jobid + '</a></div></div>';
-    
+         var searchList = '<div class="main-login main center">' +
+                   '<a href="#" id = "jobTitleId" onclick = "redirectjobviewPage(' +jobid +')"><b>'+  (i+1) + ") " +
+                     jobtitle+"-"+jobid + '</b></a></div>';
         
         	$(searchList).appendTo("#searchJobResults").ready(function(){
         	
         		var jobid = document.getElementById("jobTitleId");
+        		
+        	
 
                 
         });    
     }
 }
+
+function loadAppliedViewPage() {
+
+
+    $('#appliedJobResults').empty();
+
+    var url = "user/getAppliedJobs";
+
+    var appliedRequestObj = {};
+    var appliedResponseObj = {};
+    ajaxCall("GET", url, appliedRequestObj, function (status, body) {
+        if (status == 200) {
+          appliedResponseObj = JSON.parse(body);
+          
+          console.log(appliedResponseObj);
+          
+          for (var i = 0; i < appliedResponseObj.length; i++) {
+
+              var jobId = appliedResponseObj[i]["job"]["jobid"];
+              var jobTitle = appliedResponseObj[i]["job"]["jobtitle"];
+              var applicationStatus = appliedResponseObj[i]["status"];
+          
+              var appliedJobsList = '<div class="form-group">'+
+                  '<div class="cols-sm-10" style="text-align: left;margin-left: 8px">'+
+                  '<p id = "jobTitle-'+jobId+'"><b>'+jobTitle+'</b></p>'+
+                  '<p id = "'+jobId+'">Job ID: <b>'+jobId+'</b></p>'+
+                  '</div><div class="cols-sm-10" style="text-align: left;margin-left: 8px">'+
+                  'Job status : '+
+                  '<p id = "jobStatus-'+jobId+'"><b>'+applicationStatus+'</b></p> ' +
+                  '</div>'+
+                  '<div class="form-group">'+
+                 '<button type="button" id = "Accept-' +jobId+'"class="btn btn-primary btn-group-horizontal login-button">'+
+                 'Accept</button>&nbsp'+
+                  '<button type="button" id = "Reject-' +jobId+'"class="btn btn-primary btn-group-horizontal login-button">'+
+                  'Reject</button>&nbsp'+
+                  '<button type="button" id = "Cancel-' +jobId+'"class="btn btn-primary btn-group-horizontal login-button">'+
+                  'Cancel</button>&nbsp'+
+                  '</div></div>';
+
+              $(appliedJobsList).appendTo("#appliedJobResults");
+              
+              console.log("Changing button colors");
+              
+              var checktag = 'p#jobStatus-'+jobId;
+              
+              console.log(checktag);
+              
+              console.log($(checktag).text());
+              
+              if($('p#jobStatus-'+jobId).text() == "PENDING")
+            	{
+            	  	document.getElementById("Accept-"+jobId).disabled = true;
+	        		document.getElementById("Reject-"+jobId).disabled = true;
+	        		document.getElementById("Cancel-"+jobId).disabled = false;
+            	}  
+              else if($('p#jobStatus-'+jobId).text() == "OFFERED")
+            	{
+            	  	document.getElementById("Accept-"+jobId).disabled = false;
+	        		document.getElementById("Reject-"+jobId).disabled = false;
+	        		document.getElementById("Cancel-"+jobId).disabled = true;
+            	}  
+              
+              else if($('p#jobStatus-'+jobId).text() == "OFFER_ACCEPTED")
+          	{
+          	  	document.getElementById("Accept-"+jobId).disabled = false;
+	        		document.getElementById("Reject-"+jobId).disabled = false;
+	        		document.getElementById("Cancel-"+jobId).disabled = false;
+          	}
+              else if($('p#jobStatus-'+jobId).text() == "OFFER_REJECTED")
+            	{
+            	  	document.getElementById("Accept-"+jobId).disabled = false;
+  	        		document.getElementById("Reject-"+jobId).disabled = false;
+  	        		document.getElementById("Cancel-"+jobId).disabled = false;
+            	}
+              else if($('p#jobStatus-'+jobId).text() == "CANCELLED" || $('p#jobStatus-'+jobId) == "FILLED" )
+          	{
+          	  	    document.getElementById("Accept-"+jobId).disabled = true;
+	        		document.getElementById("Reject-"+jobId).disabled = true;
+	        		document.getElementById("Cancel-"+jobId).disabled = true;
+          	}
+                
+              
+              
+          }
+
+        }
+         });
+
+
+    
+
+
+    }
+
+
+function loadInterestedViewPage() {
+
+
+    $('#interestedJobResults').empty();
+
+    var url = "user/getInterestedJobs";
+
+    var interestedRequestObj = {};
+    var interestedResponseObj = {};
+    ajaxCall("GET", url, interestedRequestObj, function (status, body) {
+        if (status == 200) {
+        	interestedResponseObj = JSON.parse(body);
+          
+          console.log(interestedResponseObj);
+          
+          for (var i = 0; i < interestedResponseObj.length; i++) {
+
+              var jobId = interestedResponseObj[i]["job"]["jobid"];
+              var jobTitle = interestedResponseObj[i]["job"]["jobtitle"];
+              var applicationStatus = interestedResponseObj[i]["status"];
+
+              var appliedJobsList = '<div class="form-group" style="display: flex;flex-direction: column">'+
+                  '<div class="cols-sm-10">'+
+                  
+                  '<p id = "jobTitle-'+jobId+'"><b>'+jobTitle+'</b></p>'+
+                  '<p id = "'+jobId+'">Job ID: '+jobId+'</p>'+
+                  '</div><div class="cols-sm-10">'+
+                  'Job status :'+
+                  '<p id = "jobStatus-'+jobId+'"><b> '+ applicationStatus+ '</b></p> ' +
+                  '</div>'+
+                  '<div class="form-group">'+
+                 '<button type="button" id = "Accept-' +jobId+'"class="btn btn-primary btn-group-vertical login-button">'+
+                 'Accept</button>&nbsp'+
+                  '<button type="button" id = "Reject-' +jobId+'"class="btn btn-primary btn-group-vertical login-button">'+
+                  'Reject</button>&nbsp'+
+                  '<button type="button" id = "Cancel-' +jobId+'"class="btn btn-primary btn-group-vertical login-button">'+
+                  'Cancel</button>&nbsp'+
+                  '</div></div>';
+
+              $(appliedJobsList).appendTo("#interestedJobResults");
+          }
+
+        }
+        
+        else if (status == 404)
+        {       	
+        	 document.getElementById("error").innerHTML = "Users currently don't have interested jobs.";
+          	 document.getElementById("error").innerHTML += "<br><br><b> P.S Interested Jobs are jobs that are not applied by the user but marked interested </b>";
+             document.getElementById("error").style.display = "block";
+             return;
+        	}
+         });
+
+
+    
+
+
+    }
+
 
 
 
@@ -136,13 +296,9 @@ function viewJobs(e,searchResponseObj) {
 function redirectjobviewPage(jobid)
 {
 
-
-
     window.location = "/JobView.html";
     localStorage.setItem("jobId",jobid);
     
-
-
 }
 
 function loadjobviewPage()
@@ -178,7 +334,7 @@ function loadjobviewPage()
             $('p#description').text("Description : "+description);
             $('p#location').text("Location : "+location);
             $('p#salary').text("Salary : "+salary);
-            $('p#company').text("Company : "+JSON.stringify(company));
+            $('p#company').text("Company : "+ company["name"]);
             
         } 
     });
@@ -195,33 +351,23 @@ function apply(e) {
 	alert("IN apply function ");
     e.preventDefault();
     var jobID;
-/*    var jobDescriptionForm = e.target;
-    var inputArray = jobDescriptionForm.getElementsByTagName("p");
-
-    for (var i = 0; i < inputArray.length; i++) {
-
-        if (input.getAttribute("name") === "jobid") {
-            jobID = input.value;
-        }
-
-    }*/
 
     var applyRequestObj = {};
     
     jobID = localStorage.getItem("jobId");
     
-    var url = "/jobs/view/" + jobID + "/apply";
+    var url = "/jobs/view/" + Number(jobID) + "/apply";
     
-    applyRequestObj["applicationType "] = "applied";
+    applyRequestObj["applicationType"] = "applied";
+    applyRequestObj["Resume"] = "";
+    
     console.log(url);
     
-    ajaxCall("GET", url, applyRequestObj, function (status, body) {
+    ajaxCall("POST", url, applyRequestObj, function (status, body) {
 
         if (status == 200) {
 
           alert("Job successfully applied");
-
-
 
         }
 
@@ -239,40 +385,83 @@ function interested(e) {
 
     e.preventDefault();
     var jobID;
-    //var jobDescriptionForm = e.target;
-    /*var inputArray = jobDescriptionForm.getElementsByTagName("p");
-
-    for (var i = 0; i < inputArray.length; i++) {
-
-        if (input.getAttribute("name") === "jobid") {
-            jobID = input.value;
-        }
-
-    }*/
-
-    var applyRequestObj = {};
-    applyRequestObj["applicationType "] = "interested";
     jobID = localStorage.getItem("jobId");
+    
+    if(checkStatus(jobID))
+     { 
+    	var applyRequestObj = {};
+    
+    	applyRequestObj["applicationType"] = "interested";
+        applyRequestObj["Resume"] = "";
     
     var url = "/jobs/view/" + jobID + "/apply";
     
     console.log(url);
     
     
-    ajaxCall("GET", url, applyRequestObj, function (status, body) {
-
+    
+    
+    
+    
+    ajaxCall("POST", url, applyRequestObj, function (status, body) {
         if (status == 200) {
-
             alert("Job successfully mark interested");
-
         }
-
         else if (status == 403)
         {
-
             alert("Failed to mark the job as interested");
         }
     });
+     }
+    
+    else
+    	{
+    	alert("Try again!!!");
+    	}
+}
+
+
+function checkStatus(jobReq) {
+	
+	 var checkStatus = "user/"+jobReq+"/getApplicationStatus";
+	  var checkStatusRequestObj = {};
+	    
+	    ajaxCall("GET", checkStatus, checkStatusRequestObj, function (status, body) {
+	        if (status == 200) {
+	            
+	        	var checkStatusResponseObj = JSON.parse(body);
+	        	//document.getElementById("Button").disabled = true;
+	        	if(checkStatusResponseObj["type"] == "APPLIED")
+	        	{
+	        		document.getElementById("applybtn").disabled = true;
+	        		document.getElementById('applybtn').innerHTML = "Applied"
+	        		document.getElementById("markinterestedbtn").disabled = true;
+	        		document.getElementById('applybtn').innerHTML = "Interested"
+	        		
+	        	}
+	        	else if (checkStatusResponseObj["type"] == "INTERESTED")
+	        	{
+	        		document.getElementById('applybtn').innerHTML = "Interested"
+	        		document.getElementById("applybtn").disabled = false;
+	        	}
+	        	else if(checkStatusResponseObj["type"] == "null")
+	        	{
+	        		
+	            		document.getElementById("markinterestedbtn").disabled = false;
+	            		document.getElementById("applybtn").disabled = false;
+	            	
+	        	}
+	        	
+	            
+	        }
+	        else if (status == 403)
+	        {
+	            alert("Unable to get the status!!");
+	            return false;
+	        }
+	    });
+	    
+	    return true;
 }
 
 
