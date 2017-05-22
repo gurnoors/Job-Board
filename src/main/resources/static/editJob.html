@@ -25,30 +25,29 @@
     <div class="row">
         <div class="col-md-12">
             <div class="panel-title text-center">
-                <h1 class="title"> Post a Job </h1>
+                <h1 class="title"> Edit Job Content </h1>
             </div>
          
-        <div class="main-login main-center" >
+        <div class="container" >
           <form ng-submit="submitJobData()" name="postJobForm">
             	<label for="name" class="cols-sm-2 control-label">Job Title</label>
-				<input type="text" class="form-control" ng-model="job.job_title"  placeholder="Enter job title"/>
+				<input type="text" class="form-control" ng-model=job.jobtitle  />
 				<br></br>
 				<label for="desc" class="cols-sm-2 control-label">Description</label>
-				<input type="text" class="form-control" name="desc" ng-model="job.desc"  placeholder="Enter desc"/>
+				<input type="text" class="form-control" name="desc" ng-model=job.description  placeholder="Enter desc"/>
 				<br></br>
 				<label for="location" class="cols-sm-2 control-label">Location</label>
-				<input type="text" class="form-control" ng-model="job.location"  placeholder="Enter the city"/>
+				<input type="text" class="form-control" ng-model=job.location  placeholder="Enter the city"/>
 				<br></br>
 				<label for="salary" class="cols-sm-2 control-label">Salary</label>
-				<input type="text" class="form-control" ng-model="job.salary"  placeholder="Enter salary"/>
+				<input type="text" class="form-control" ng-model=job.salary  placeholder="Enter salary"/>
 				<br></br>
 				<label for="skills" class="cols-sm-2 control-label">Skills Required</label>
-				<input type="text" class="form-control" ng-model="job.skills"  placeholder="skills required"/>
+				<input type="text" class="form-control" ng-model=job.skill  placeholder="skills required"/>
 				<br></br>
-				<input type="submit" id="submit" class="btn btn-primary btn-lg login-button" value="Create" />
+				<input type="submit" id="submit" class="btn btn-primary btn-lg login-button" value="Update" ng-click="updateContent(job)"/>
                 <button type="reset" id = "Reset" class="btn btn-primary btn-lg  login-button">Reset</button>
-            </form>  
-
+            </form>
         </div>
         </div>
         </div>

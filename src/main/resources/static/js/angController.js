@@ -73,9 +73,10 @@ app.controller('employerDashboardCtrl', function($scope, $http, $window) {
     		 console.log(data.data.badRequest.msg);
     		});
 	
-	$scope.editJob = function (job){
-		$window.localStorage.setItem("jobToEdit", job);
-		$window.location.href = "/editJob.html";
+	$scope.viewJob = function (job){
+		console.log(job);
+		$window.localStorage.setItem("jobToEdit", JSON.stringify(job));
+		$window.location.href = "/viewPosting.html";
 	}
 	
 });
@@ -122,19 +123,129 @@ app.controller('postJobsCtrl', function($scope, $http, $window) {
 });
 
 
-app.controller('editJobCtrl', function($scope, $http, $window) {
+app.controller('viewJobCtrl', function($scope, $http, $window) {
 	
-	$scope.job = $window.localStorage.getItem("jobToEdit");
-	$scope.submitJobData = function (){ 
-		
+	$scope.job = JSON.parse($window.localStorage.getItem("jobToEdit"));
+	console.log($window.localStorage.getItem("jobToEdit"));	
+	console.log($scope.job);
+	
+	$scope.updatePositionContent = function (){ 		
+		$window.location.href = "/editJob.html";
+	};
+	
+
+	$scope.cancelJob = function (job){ 
+		console.log("cancelled");
+		console.log($scope.job);
 		$http({
-        url: '/jobs/update/',
-        method: 'PUT',
+	        url: '/jobs/updateStatus',
+	        method: 'PUT',
+	        data: {	
+	        		"id": job.jobid,
+	        		"Status": "CANCELLED"
+	        	},
+	        transformResponse: function (data, headersGetter, status) 
+	        					{ 
+	        						if(status=='404')
+	        						{	
+	        							console.log("error");
+	        							return JSON.parse(data).badRequest.msg;
+	        						}
+	        						else if(status=='200')
+	        						{
+	        							console.log(data);
+	        							return data;
+	        						}
+	        						else{
+	        							data= JSON.parse(data);
+	        							return data;
+	        						}; 
+	        					
+	        					}
+	    }).then(function successCallback(data) 
+	    		{ 
+	    		console.log(data);
+	    		}, 
+	    		function err(data) 
+	    		{
+	    		 console.log("error");
+	    		 console.log(data.data);
+	    		});
+	};
+	
+	$scope.fillJob = function (job){ 
+		console.log("filled");
+		console.log($scope.job);
+		$http({
+	        url: '/jobs/updateStatus',
+	        method: 'PUT',
+	        data: {	
+	        		"id": job.jobid,
+	        		"Status": "FILLED"
+	        	},
+	        transformResponse: function (data, headersGetter, status) 
+	        					{ 
+	        						if(status=='404')
+	        						{	
+	        							console.log("error");
+	        							return JSON.parse(data).badRequest.msg;
+	        						}
+	        						else if(status=='200')
+	        						{
+	        							console.log(data);
+	        							return data;
+	        						}
+	        						else{
+	        							data= JSON.parse(data);
+	        							return data;
+	        						}; 
+	        					
+	        					}
+	    }).then(function successCallback(data) 
+	    		{ 
+	    		console.log(data);
+	    		}, 
+	    		function err(data) 
+	    		{
+	    		 console.log("error");
+	    		 console.log(data.data);
+	    		});
+	};
+	
+	$scope.offerJob = function (job, id){ 
+		console.log("offered");
+		console.log(job);
+		console.log(id);
+	};
+	
+	$scope.rejectApplication = function (job, id){ 
+		console.log("rejected");
+		console.log(job);
+		console.log(id);
+	};
+	
+	$scope.viewApplicant = function (job, id){ 
+		console.log("viewedProfile");
+		console.log(job);
+		console.log(id);
+		$window.location.href = "/applicantProfile.html";
+		
+	};
+	
+	
+	$http({
+        url: '/jobApplicants/' + $scope.job.jobid,
+        method: 'GET',
         transformResponse: function (data, headersGetter, status) 
         					{ 
-        						if(status=='403')
+        						if(status=='404')
         						{	
         							console.log("error");
+        							return JSON.parse(data).badRequest.msg;
+        						}
+        						else if(status=='200')
+        						{
+        							data= JSON.parse(data);
         							return data;
         						}
         						else{
@@ -142,32 +253,97 @@ app.controller('editJobCtrl', function($scope, $http, $window) {
         							return data;
         						}; 
         					
-        					},
-		data: {	
-			
-				id: $scope.job.job_title,
-				job_title: $scope.job.job_title , 
-			 	desc: $scope.job.desc, 
-			 	skills: $scope.job.skills,
-			 	location: $scope.job.location,
-			 	salary: $scope.job.salary
-        }
+        					}
     }).then(function successCallback(data) 
     		{ 
     		console.log(data);
-    		$window.location.href = "/EmployerDashboard.html";
+    		$scope.applicants = data;
+    		$scope.applicants = [
+    				{"id":"1", "status":"pending", "firstname":"anudeep", "lastname": "chinta"},
+    				{"id":"2", "status":"pending", "firstname":"edava", "lastname": "chinta"}
+    		];
     		}, 
     		function err(data) 
     		{
-    		 console.log("error"); 
-    		 console.log(data.data.badRequest.msg);
+    		 console.log("error");
+    		 console.log(data.data);
+    		 $scope.applicants = [
+ 				{"id":"1", "status":"pending", "firstname":"anudeep", "lastname": "chinta"},
+ 				{"id":"2", "status":"pending", "firstname":"edava", "lastname": "chinta"}
+ 		];
     		});
+});
+
+app.controller('editJobCtrl', function($scope, $http, $window) {
+	
+	$scope.job = JSON.parse($window.localStorage.getItem("jobToEdit"));
+	console.log($window.localStorage.getItem("jobToEdit"));	
+	console.log($scope.job);
+	
+	$scope.updateContent = function (job){
+		console.log("updating job");
+		$http({
+	        url: '/jobs/updateContent',
+	        method: 'PUT',
+	        data: {	
+	        		"id": job.jobid,
+	        		"Title": job.jobtitle,
+	        		"Description": job.description,
+	        		"Responsibilities": job.skill,
+	        		"Office Location": job.location,
+	        		"Salary": job.salary
+	        	},
+	        transformResponse: function (data, headersGetter, status) 
+	        					{ 
+	        						if(status=='404')
+	        						{	
+	        							console.log("error");
+	        							return data;
+	        						}
+	        						else if(status=='200')
+	        						{
+	        							console.log(data);
+	        							return data;
+	        						}
+	        						else{
+	        							data= JSON.parse(data);
+	        							return data;
+	        						}; 
+	        					
+	        					}
+	    }).then(function successCallback(data) 
+	    		{ 
+	    		console.log(data);
+	    		$window.localStorage.setItem("jobToEdit",JSON.stringify(job));
+	    		$window.location.href = "/editJobSuccess.html";
+	    		}, 
+	    		function err(data) 
+	    		{
+	    		 console.log("error");
+	    		 console.log(data);
+	    		});
+		
+	};
+	
+	
+});
+
+app.controller('editJobSuccessCtrl', function($scope, $http, $window) {
+	
+	$scope.job = JSON.parse($window.localStorage.getItem("jobToEdit"));
+	console.log($window.localStorage.getItem("jobToEdit"));	
+	console.log($scope.job);
+	
+	$scope.gotoDashboard = function (){ 
+		$window.location.href = "/EmployerDashboard.html";
 	}
 });
 
 app.controller('editCompanyCtrl', function($scope, $http, $window) {
 	
 	$scope.company = {};
+	$scope.job = JSON.parse($window.localStorage.getItem("jobToEdit"));
+	console.log($scope.job);
 	$scope.submitCompanyData = function (){ 
 		
 		$http({
