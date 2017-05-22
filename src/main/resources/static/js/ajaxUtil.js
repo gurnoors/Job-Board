@@ -78,7 +78,9 @@ var FreeTextSearch,SearchByCompany,SearchByLocation,SearchBySalary;
             var searchResponseObj = JSON.parse(body);
             console.log(JSON.stringify(searchResponseObj));
             console.log(searchResponseObj);
-            viewJobs(e,searchResponseObj);
+        	window.location = "/searchResults.html";
+        	localStorage.setItem("searchResult",JSON.stringify(searchResponseObj));
+           /* viewJobs(e,searchResponseObj);*/
         }
         else {
             console.log("Search not done : " + status);
@@ -99,16 +101,19 @@ var FreeTextSearch,SearchByCompany,SearchByLocation,SearchBySalary;
 }
 
 
-function viewJobs(e,searchResponseObj) {
+function viewJobs() {
+
+    
+	var searchResponseString = localStorage.getItem("searchResult");
+	
+	console.log((searchResponseString));
+	
+	var searchResponseObj = JSON.parse(searchResponseString);
 	
 	
 	$('#searchJobResults').empty();
 	
-	
-	var headerResult = '<div class="panel-title text-center"><h1 class="title"> Search Results </h1></div>';
-	
-	$(headerResult).appendTo("#searchJobResults");
-	
+
 	for (var i = 0; i < searchResponseObj.length; i++) {
 
         var jobid = searchResponseObj[i]["jobid"];
@@ -121,18 +126,12 @@ function viewJobs(e,searchResponseObj) {
 
 
 
-         var searchList = '<div class="main-login main center">' +
-                   '<a href="#" id = "jobTitleId" onclick = "redirectjobviewPage(' +jobid +')"><b>'+  (i+1) + ") " +
-                     jobtitle+"-"+jobid + '</b></a></div>';
+         var searchList = '<a href="#" id = "jobTitleId" onclick = "redirectjobviewPage(' +jobid +')"><b>'+  (i+1) + ") " +
+                     jobtitle + '</b></a>' +
+                     '<p><b>Job Requestion Number : </b>'+jobid+'</p>'+ 
+                     '<p><b>Location : </b>'+location+'</p>';
         
-        	$(searchList).appendTo("#searchJobResults").ready(function(){
-        	
-        		var jobid = document.getElementById("jobTitleId");
-        		
-        	
-
-                
-        });    
+        	$(searchList).appendTo("#searchJobResults");
     }
 }
 
@@ -261,13 +260,9 @@ function loadInterestedViewPage() {
                   '<p id = "jobStatus-'+jobId+'"><b> '+ applicationStatus+ '</b></p> ' +
                   '</div>'+
                   '<div class="form-group">'+
-                 '<button type="button" id = "Accept-' +jobId+'"class="btn btn-primary btn-group-vertical login-button">'+
-                 'Accept</button>&nbsp'+
-                  '<button type="button" id = "Reject-' +jobId+'"class="btn btn-primary btn-group-vertical login-button">'+
-                  'Reject</button>&nbsp'+
-                  '<button type="button" id = "Cancel-' +jobId+'"class="btn btn-primary btn-group-vertical login-button">'+
-                  'Cancel</button>&nbsp'+
-                  '</div></div>';
+                 '<button type="button" id = "NotInterested-' +jobId+'"class="btn btn-primary btn-group-vertical login-button">'+
+                 'Mark Not Interested</button>&nbsp'+
+                 '</div></div>';
 
               $(appliedJobsList).appendTo("#interestedJobResults");
           }
