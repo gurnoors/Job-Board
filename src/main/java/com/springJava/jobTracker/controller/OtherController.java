@@ -232,11 +232,11 @@ public class OtherController {
 
 //TODO: fix
 			if (jobj.get("applicationType") != null) {
-				switch (jobj.get("applicationType").getAsString()) {
-				case "interested":
+				switch (jobj.get("applicationType").getAsString().toUpperCase()) {
+				case "INTERESTED":
 					type = ApplicationType.INTERESTED;
 					break;
-				case "applied":
+				case "APPLIED":
 					type = ApplicationType.APPLIED;
 					break;
 				default:
@@ -252,7 +252,6 @@ public class OtherController {
 
 		Application application = new Application(user, job, type, status);
 
-		// TODO: catch duplicate row/ unique constraint fail
 		try {
 			appRepo.save(application);
 		} catch (DataIntegrityViolationException e) {
@@ -446,7 +445,6 @@ public class OtherController {
 	@RequestMapping(value = "/user/processApplication", method = { RequestMethod.POST })
 	@ResponseBody
 	public ResponseEntity<?> userProcessApplication(HttpServletRequest request, HttpEntity<String> httpEntity) {
-		// TODO: mustDo !!!!!!copy pasted method, wrong
 
 		System.out.println("isLogged IN --> " + (String) request.getSession().getAttribute("loggedIn"));
 		System.out.println((String) request.getSession().getAttribute("email"));
