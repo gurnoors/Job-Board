@@ -47,8 +47,8 @@
           <br></br>
           <form method="post" name="nameForm" style="display:inline;">
 			<input type="submit" class="btn btn-primary btn-lg login-button" value="Update Content" ng-click="updatePositionContent()">
-			<input type="submit" class="btn btn-primary btn-lg login-button" value="Cancel" ng-click="cancelJob(job)">
-			<input type="submit" class="btn btn-primary btn-lg login-button" value="Mark Filled" ng-click="fillJob(job)">
+			<input type="submit" class="btn btn-primary btn-lg login-button" value="Cancel" ng-disabled="disableCancel" ng-click="cancelJob(job)">
+			<input type="submit" class="btn btn-primary btn-lg login-button" value="Mark Filled" ng-disabled="disableFilled" ng-click="fillJob(job)">
 		  </form>
         </div>
         
@@ -57,9 +57,9 @@
                 <h1 class="title"> Applications </h1>
             </div>
             <br></br>
-            <table>
+            <table border="1">
             <tr ng-repeat="applicant in applicants">
-            	<td>{{applicant.id}}</td>
+            	<td>{{applicant.emailid}}</td>
             	<td>{{applicant.firstname}}</td>
             	<td>{{applicant.lastname}}</td>
             	<td>{{applicant.status}}</td>

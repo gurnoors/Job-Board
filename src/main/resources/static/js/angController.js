@@ -165,6 +165,7 @@ app.controller('viewJobCtrl', function($scope, $http, $window) {
 	    }).then(function successCallback(data) 
 	    		{ 
 	    		console.log(data);
+	    		$scope.job.status = "CANCELLED";
 	    		}, 
 	    		function err(data) 
 	    		{
@@ -193,6 +194,7 @@ app.controller('viewJobCtrl', function($scope, $http, $window) {
 	        						else if(status=='200')
 	        						{
 	        							console.log(data);
+	        							
 	        							return data;
 	        						}
 	        						else{
@@ -204,6 +206,7 @@ app.controller('viewJobCtrl', function($scope, $http, $window) {
 	    }).then(function successCallback(data) 
 	    		{ 
 	    		console.log(data);
+	    		$scope.job.status = "FILLED";
 	    		}, 
 	    		function err(data) 
 	    		{
@@ -256,12 +259,18 @@ app.controller('viewJobCtrl', function($scope, $http, $window) {
         					}
     }).then(function successCallback(data) 
     		{ 
-    		console.log(data);
-    		$scope.applicants = data;
-    		$scope.applicants = [
-    				{"id":"1", "status":"pending", "firstname":"anudeep", "lastname": "chinta"},
-    				{"id":"2", "status":"pending", "firstname":"edava", "lastname": "chinta"}
-    		];
+    		console.log(data.data);
+    		$scope.applicants = data.data;
+    		var i;
+    		for(i=0;i<$scope.applicants.length ; i++)
+    			{
+    			console.log($scope.applicants[i]);
+    			if($scope.applicants[i].status == "FILLED")
+    				{
+    				$scope.disableCancel=true;
+    				$scope.disableFilled=true;
+    				}
+    			};
     		}, 
     		function err(data) 
     		{
