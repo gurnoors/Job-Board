@@ -521,4 +521,24 @@ public class OtherController {
 		return new ResponseEntity<Application>(application, HttpStatus.OK);
 	}
 
+	@RequestMapping(value = "/getProfile/{emailid:.+}", method = { RequestMethod.GET })
+	public ResponseEntity<?> getProfile(HttpServletRequest request, @PathVariable String emailid) {
+		// TODO: maybe check if user loggedIn
+		System.out.println("---" + emailid + "---");
+		User user = userRepo.findByEmailid(emailid);
+		if (user == null) {
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.NOT_FOUND.value(), "User with email id " + emailid + " not found"),
+					HttpStatus.NOT_FOUND);
+		}
+		Profile profile = profileRepo.findOne(user.getUserid());
+		if (profile == null) {
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.NOT_FOUND.value(),
+							"User with email id " + emailid + " has signed up, but not created a profile yet."),
+					HttpStatus.NOT_FOUND);
+		}
+		return new ResponseEntity<Profile>(profile, HttpStatus.OK);
+	}
+
 }
