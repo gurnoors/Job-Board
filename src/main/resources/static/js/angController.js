@@ -25,7 +25,7 @@ app.controller('jobSeekerSignUpCtrl', function($scope, $http, $window) {
             					
             					},
             data: {	 username: $scope.user.name , 
-					 emailid: $scope.user.email ,
+            		 emailID: $scope.user.email ,
 					 password: $scope.user.password
             }
         }).then(function successCallback(data) 
