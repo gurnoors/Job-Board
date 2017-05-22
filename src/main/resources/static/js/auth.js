@@ -43,9 +43,9 @@ function  verifyUser(e) {
     		var userType = localStorage.getItem("userType")
 
             if(userType == "employer")
-            		window.location.href = "/EmployerDashboard.html";
+            		window.location.href = "/index.html";
             else if (userType == "user")
-                window.location.href = "/Dashboard.html";
+                window.location.href = "/index.html";
 
         } else if (status == 403) {
         	 window.location.href = "/UserVerification.html?errorMessage=wrongCode";

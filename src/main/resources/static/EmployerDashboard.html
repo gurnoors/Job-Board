@@ -39,32 +39,22 @@
             <div id="main">
                 <span style="font-size:30px;cursor:pointer" onclick="openNav()">&#9776;</span>
             </div>
-        <div class="main-login main-center">
+        <div class="container">
             <div ng-app="myApp" ng-controller="employerDashboardCtrl">
-            <table>
-            	 <thead>
- 				 <tr>
-     				<th>id</th>
-     				<th>title</th>
-     				<th>description</th>
-     				<th>skill</th>
-     				<th>location</th>
-     				<th>status</th>
-     				<th>Update</th>
-  				</tr>
- 				</thead>
-	            <tr ng-repeat="job in postedJobs">
-	            	<td>{{ job.jobid }} </td>
-		            <td>{{ job.jobtitle }}</td>
-		            <td>{{ job.description }}</td>
-		            <td>{{ job.skill }}</td>
-		            <td>{{ job.location }}</td>
-		            <td>{{ job.status }}</td>
-		            <td>
-		            <input type="submit" value="Edit Posting" onclick="editJob(job)" /> 
-		            </td>
-	            </tr>
-            </table>
+            <div ng-repeat="job in postedJobs">
+            	<div style="border:1px solid black;text-align:left">
+            		<div style="margin-left: 5px"> <b>Id:</b> {{ job.jobid }}</div>
+ 					<div style="margin-left: 5px"><b>Position:</b> {{ job.jobtitle }}</div>
+ 					<div style="margin-left: 5px"><b>Description:</b> {{ job.description }}</div>
+ 					<div style="margin-left: 5px"><b>Skills:</b> {{ job.skill }}</div>
+ 					<div style="margin-left: 5px"><b>Location:</b> {{ job.location }}</div>
+ 					<div style="margin-left: 5px"><b>Status:</b> {{ job.status }} </div>
+ 					<input type="submit" style="margin-left: 5px; margin-bottom: 5px" class="btn btn-primary" value="View/Edit Posting" ng-click="viewJob(job)" />
+ 					 
+ 				</div>
+ 				<br>
+ 				</br>
+            </div>
         	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
 			<script src="js/angController.js"></script>
        		</div>
