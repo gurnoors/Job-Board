@@ -3,8 +3,10 @@ package com.springJava.jobTracker.controller;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
 
 import javax.mail.internet.MimeMessage;
 import javax.servlet.http.HttpServletRequest;
@@ -17,6 +19,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.FastByteArrayOutputStream;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -55,19 +58,17 @@ public class WebController {
 	@Autowired
 	ProfileRepo profileRepo;
 	@Autowired
-    private JavaMailSender sender;
+	private JavaMailSender sender;
 	@Autowired
 	ApplicationRepo appRepo;
 
-	
 	// --------------- Sanity Check --------------------
 	@RequestMapping(value = "/", method = RequestMethod.GET)
 	public String welcome() {
 		return "Welcome to your personal Job Tracker.";
 	}
 
-	
-	//--------------- Job seeker sign up -------------------------
+	// --------------- Job seeker sign up -------------------------
 	@RequestMapping(value = "/users/create", method = { RequestMethod.POST })
 	public ResponseEntity<?> createUser(HttpServletRequest request, HttpEntity<String> httpEntity)
 			throws UnsupportedEncodingException {
@@ -108,16 +109,18 @@ public class WebController {
 		request.getSession().setAttribute("email", emailid);
 
 		try {
-			sendEmail(emailid, "Dear User,\n\nThank you for registering in Job-Borad. Your verification code is " + user.getVerificationcode() + ".\n\nThanks,\nJob-board", 
+			sendEmail(emailid,
+					"Dear User,\n\nThank you for registering in Job-Borad. Your verification code is "
+							+ user.getVerificationcode() + ".\n\nThanks,\nJob-board",
 					"Verification code from Job-Board");
 			return new ResponseEntity<String>("Email sent successfully with the verification code", HttpStatus.OK);
-		} catch(Exception ex) {
-			return new ResponseEntity<String>("Error sending email " +ex, HttpStatus.INTERNAL_SERVER_ERROR);
+		} catch (Exception ex) {
+			return new ResponseEntity<String>("Error sending email " + ex, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
-	
-	//----------------- job seeker & employer verification --------------------------
+	// ----------------- job seeker & employer verification
+	// --------------------------
 	@RequestMapping(value = "/users/verify", method = { RequestMethod.POST })
 	public ResponseEntity<?> verifyUser(HttpServletRequest request, HttpEntity<String> httpEntity)
 			throws UnsupportedEncodingException {
@@ -142,12 +145,13 @@ public class WebController {
 			} else {
 				user.setStatus(true);
 				try {
-					sendEmail(emailid, "Dear User,\n\nYour account has been verified successfully. Happy job hunting.\n\nThanks,\nJob-board", 
+					sendEmail(emailid,
+							"Dear User,\n\nYour account has been verified successfully. Happy job hunting.\n\nThanks,\nJob-board",
 							"Welcome to Job-Board");
 					return new ResponseEntity<String>("Email sent successfully", HttpStatus.OK);
-					
+
 				} catch (Exception e) {
-					return new ResponseEntity<String>("Error sending email " +e, HttpStatus.INTERNAL_SERVER_ERROR);
+					return new ResponseEntity<String>("Error sending email " + e, HttpStatus.INTERNAL_SERVER_ERROR);
 				}
 			}
 		} else {
@@ -160,20 +164,20 @@ public class WebController {
 					company.setStatus(true);
 					msg = "User with id " + company.getEmailid() + " is verified successfully";
 					try {
-						sendEmail("anubha.mandal@sjsu.edu", "Dear Employer,\n\nYour account has been verified successfully.\n\nThanks,\nJob-board",
+						sendEmail("anubha.mandal@sjsu.edu",
+								"Dear Employer,\n\nYour account has been verified successfully.\n\nThanks,\nJob-board",
 								"Welcome to Job-Board");
 						return new ResponseEntity<String>("Email sent successfully", HttpStatus.OK);
 					} catch (Exception e) {
-						return new ResponseEntity<String>("Error sending email " +e, HttpStatus.INTERNAL_SERVER_ERROR);
+						return new ResponseEntity<String>("Error sending email " + e, HttpStatus.INTERNAL_SERVER_ERROR);
 					}
 				}
 			}
 		}
 		return new ResponseEntity<>(msg, HttpStatus.OK);
 	}
-	
 
-	//-------------------- Employer sign up -----------------------------
+	// -------------------- Employer sign up -----------------------------
 	@RequestMapping(value = "/employers/create", method = { RequestMethod.POST })
 	@ResponseBody
 	public ResponseEntity<?> createEmployer(HttpServletRequest request, HttpEntity<String> httpEntity)
@@ -188,7 +192,7 @@ public class WebController {
 		String emailid = jobj.get("Email ID").getAsString();
 		String password = jobj.get("Password").getAsString();
 		String companyname = jobj.get("Company Name").getAsString();
-		
+
 		String website = null;
 		if (jobj.get("Website") != null) {
 			website = jobj.get("Website").getAsString();
@@ -217,8 +221,7 @@ public class WebController {
 					new ControllerError(HttpStatus.BAD_REQUEST.value(), "Name already registered"),
 					HttpStatus.BAD_REQUEST);
 		}
-		
-		
+
 		Random rand = new Random();
 		String code = String.format("%04d", rand.nextInt(10000));
 		company = new Company(companyname, emailid, password, website, address, description, logo, code);
@@ -226,19 +229,27 @@ public class WebController {
 
 		request.getSession().setAttribute("loggedIn", "employer");
 		request.getSession().setAttribute("email", emailid);
-		
-		//String msg = null;
+
+		// String msg = null;
 		try {
-			sendEmail(emailid, "Dear Employer,\n\nThank you for registering in Job-Borad. Your verification code is " + company.getVerificationcode() + ".\n\nThanks,\nJob-board", 
+			sendEmail(emailid,
+					"Dear Employer,\n\nThank you for registering in Job-Borad. Your verification code is "
+							+ company.getVerificationcode() + ".\n\nThanks,\nJob-board",
 					"Verification code from Job-Board");
 			return new ResponseEntity<String>("Email sent successfully with the verification code", HttpStatus.CREATED);
-		} catch(Exception ex) {
-			return new ResponseEntity<String>("Error sending email " +ex, HttpStatus.INTERNAL_SERVER_ERROR);
+		} catch (Exception ex) {
+			return new ResponseEntity<String>("Error sending email " + ex, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
-	//------------------- Job seeker profile create/ update ------------------------
-	@RequestMapping(value = "/userprofile/create", method = { RequestMethod.POST })			//need to change the entry point
+	// ------------------- Job seeker profile create/ update
+	// ------------------------
+	@RequestMapping(value = "/userprofile/create", method = { RequestMethod.POST }) // need
+																					// to
+																					// change
+																					// the
+																					// entry
+																					// point
 
 	public ResponseEntity<?> createUserProfile(HttpServletRequest request, HttpEntity<String> httpEntity)
 			throws UnsupportedEncodingException {
@@ -275,10 +286,9 @@ public class WebController {
 					HttpStatus.NOT_FOUND);
 		}
 
-		if( user == null)
-		{
-			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
-					"User not found"), HttpStatus.NOT_FOUND);
+		if (user == null) {
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.NOT_FOUND.value(), "User not found"), HttpStatus.NOT_FOUND);
 
 		}
 
@@ -294,11 +304,13 @@ public class WebController {
 		}
 
 		String msg = "Profile with userid " + user.getUserid() + "is updated successfully";
-		return new ResponseEntity<>(msg, HttpStatus.OK); 	// need to send an email notification as well.
+		return new ResponseEntity<>(msg, HttpStatus.OK); // need to send an
+															// email
+															// notification as
+															// well.
 	}
-	
 
-	//------------------ Post a job -------------------------
+	// ------------------ Post a job -------------------------
 	@RequestMapping(value = "/jobs/post", method = { RequestMethod.POST })
 	public ResponseEntity<?> postJob(HttpServletRequest request, HttpEntity<String> httpEntity)
 			throws UnsupportedEncodingException {
@@ -332,20 +344,20 @@ public class WebController {
 		jobRepo.save(job);
 
 		try {
-			sendEmail(emailid, "Dear Employer,\n\nJob with id #" + job.getJobid() + " is posted successfully. Below are the job details:\nJob-Title: " +job_title+ "\nSkills: " +skills+ "\ndescription: " +desc+ "\nLocation: " +location+ ".\n\nThanks,\nJob-Borad.", 
+			sendEmail(emailid, "Dear Employer,\n\nJob with id #" + job.getJobid()
+					+ " is posted successfully. Below are the job details:\nJob-Title: " + job_title + "\nSkills: "
+					+ skills + "\ndescription: " + desc + "\nLocation: " + location + ".\n\nThanks,\nJob-Borad.",
 					"New job posted in Job-Board");
 			return new ResponseEntity<String>("Email sent successfully with the job details", HttpStatus.CREATED);
-		} catch(Exception ex) {
-			return new ResponseEntity<String>("Error sending email " +ex, HttpStatus.INTERNAL_SERVER_ERROR);
+		} catch (Exception ex) {
+			return new ResponseEntity<String>("Error sending email " + ex, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
 
-	
-	//----------- Update a job Content ----------
+	// ----------- Update a job Content ----------
 	@RequestMapping(value = "/jobs/updateContent", method = { RequestMethod.PUT })
 	public ResponseEntity<?> updateJobContent(HttpServletRequest request, HttpEntity<String> httpEntity)
 			throws UnsupportedEncodingException {
-
 
 		request.setCharacterEncoding("UTF-8");
 		String body = httpEntity.getBody();
@@ -371,152 +383,190 @@ public class WebController {
 		String emailid = (String) request.getSession().getAttribute("email");
 
 		try {
-			sendEmail(emailid, "Dear Employer,\n\nJob with id " + job.getJobid() + " is updated successfully. Below are the job details:\nJob-Title: " +job_title+ "\nSkills: " +skills+ "\ndescription: " +desc+ "\nLocation: " +location+ ".\n\nThanks,\nJob-Borad.", 
+			sendEmail(emailid, "Dear Employer,\n\nJob with id " + job.getJobid()
+					+ " is updated successfully. Below are the job details:\nJob-Title: " + job_title + "\nSkills: "
+					+ skills + "\ndescription: " + desc + "\nLocation: " + location + ".\n\nThanks,\nJob-Borad.",
 					"Job with id " + id + " updated in Job-Board");
 			return new ResponseEntity<String>("Email sent successfully with the job details", HttpStatus.OK);
-		} catch(Exception ex) {
-			return new ResponseEntity<String>("Error sending email " +ex, HttpStatus.INTERNAL_SERVER_ERROR);
+		} catch (Exception ex) {
+			return new ResponseEntity<String>("Error sending email " + ex, HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 	}
-	
-	
-	//----------- Update a job Status by employer - filled/cancelled ----------
-		@RequestMapping(value = "/jobs/updateStatus", method = { RequestMethod.PUT })
-		public ResponseEntity<?> updateJobStatus(HttpServletRequest request, HttpEntity<String> httpEntity)
-				throws UnsupportedEncodingException {
 
-			request.setCharacterEncoding("UTF-8");
-			String body = httpEntity.getBody();
-
-			// read body
-			JsonElement jelem = gson.fromJson(body, JsonElement.class);
-			JsonObject jobj = jelem.getAsJsonObject();
-			Long id = jobj.get("id").getAsLong();
-			String status_tmp = jobj.get("Status").getAsString();
-			
-			Job job = jobRepo.findOne(id);
-			if (job == null) {
-				return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
-						"Job with id" +id + "Not found"), HttpStatus.NOT_FOUND);
-			}
-	
-			JobStatus status = JobStatus.OPEN;
-			if (status_tmp.equals("FILLED")){
-				status = JobStatus.FILLED;
-				List<Application> appList = appRepo.findByStatusAndJob(ApplicationStatus.PENDING, job);
-				for(Application a : appList){
-					appRepo.updateApplicationStatus_JS(ApplicationStatus.FILLED, a.getApplicationid());
-				}
-			}
-			else if (status_tmp.equals("CANCELLED")){
-				status = JobStatus.CANCELLED;
-				List<Application> appList = appRepo.findByStatusAndJob(ApplicationStatus.OFFER_ACCEPTED, job);
-				if(!appList.isEmpty()){
-					return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.FORBIDDEN.value(),
-							"Job cannot be cancelled, one or more offers accepted."), HttpStatus.FORBIDDEN);
-				}
-			}
-			else {
-				return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.BAD_REQUEST.value(),
-						"Not a valid Status, only FILLED/ CANCELLED are allowed"), HttpStatus.BAD_REQUEST);
-			}
-
-			jobRepo.updateJobStatus(status, id);
-			String emailid = (String) request.getSession().getAttribute("email");
-			
-			try {
-				sendEmail(emailid, "Dear Employer,\n\nJob status with id " + job.getJobid() + " is updated successfully to " + status + ". Below are the job details:\nJob-Title: " +job.getJobtitle()+ "\ndescription: " +job.getDescription()+ ".\n\nThanks,\nJob-Borad.", 
-						"Job with id " + id + " updated in Job-Board");
-				return new ResponseEntity<String>("Email sent successfully with the job details", HttpStatus.OK);
-			} catch(Exception ex) {
-				return new ResponseEntity<String>("Error sending email " +ex, HttpStatus.INTERNAL_SERVER_ERROR);
-			}
-		}
-
-		
-	//------- Get all the applications of job for employer ------------	
-	@RequestMapping(value = "/jobApplicants/{jobid}", method = {RequestMethod.GET })
-	public ResponseEntity<?> getJobApplicants(HttpServletRequest request, @PathVariable("jobid") Long id) 
+	// ----------- Update a job Status by employer - filled/cancelled ----------
+	@RequestMapping(value = "/jobs/updateStatus", method = { RequestMethod.PUT })
+	public ResponseEntity<?> updateJobStatus(HttpServletRequest request, HttpEntity<String> httpEntity)
 			throws UnsupportedEncodingException {
+		//TODO: check loggedIn
 		
+		request.setCharacterEncoding("UTF-8");
+		String body = httpEntity.getBody();
+
+		// read body
+		JsonElement jelem = gson.fromJson(body, JsonElement.class);
+		JsonObject jobj = jelem.getAsJsonObject();
+		Long id = jobj.get("id").getAsLong();
+		String status_tmp = jobj.get("Status").getAsString();
+
 		Job job = jobRepo.findOne(id);
 		if (job == null) {
-			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
-					"Job with id " +id + " not found"), HttpStatus.NOT_FOUND);
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.NOT_FOUND.value(), "Job with id" + id + "Not found"),
+					HttpStatus.NOT_FOUND);
 		}
-		
+
+		JobStatus status = JobStatus.OPEN;
+		if (status_tmp.equals("FILLED")) {
+			status = JobStatus.FILLED;
+			List<Application> appList = appRepo.findByStatusAndJob(ApplicationStatus.PENDING, job);
+			for (Application a : appList) {
+				appRepo.updateApplicationStatus_JS(ApplicationStatus.FILLED, a.getApplicationid());
+			}
+		} else if (status_tmp.equals("CANCELLED")) {
+			status = JobStatus.CANCELLED;
+			List<Application> appList = appRepo.findByStatusAndJob(ApplicationStatus.OFFER_ACCEPTED, job);
+			if (!appList.isEmpty()) {
+				return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.FORBIDDEN.value(),
+						"Job cannot be cancelled, one or more offers accepted."), HttpStatus.FORBIDDEN);
+			} else {
+				boolean areEmailsSent = true;
+				ApplicationStatus[] nonTerminalStatesArr = {ApplicationStatus.PENDING, ApplicationStatus.OFFERED};
+				List<ApplicationStatus> nonTerminalStates = new ArrayList<ApplicationStatus>(Arrays.asList(nonTerminalStatesArr));
+				List<Application> sadApplications = appRepo.findByJobAndStatusIn(job, nonTerminalStates);
+				
+				//List<String> sadEmails = appRepo.getEmailsByJobid(job.getJobid());
+//				for (String sadEmail : sadEmails) {
+				for (Application sadApplication : sadApplications) {
+					String sadEmail = sadApplication.getUser().getEmailid();
+					String sadMsg = "Your profile was very impressive, however we had to cancel"
+							+ " this opening sue to some unforseeable circumstances. We have kept your resme on file in case a more approprite opportunity comes up."
+							+ " Please have a look at other jobs at our company. We apologize for the inconvenience";
+					String sadSubject = job.getJobtitle() + " position cancelled";
+					try {
+						sendEmail(sadEmail, sadMsg, sadSubject);
+					} catch (Exception e) {
+						System.out.println("Email to "+sadEmail+" not sent");
+						e.printStackTrace();
+						areEmailsSent = false;
+					}
+				}
+				Long deletedAppsCount = appRepo.removeByJob(job);
+				if(areEmailsSent){
+					return new ResponseEntity<String>("Job cancelled, "+String.valueOf(deletedAppsCount)+" related applications deleted and applicants notified"
+							+ " via email. ", HttpStatus.OK);
+				}else{
+					return new ResponseEntity<String>("Job cancelled, "+String.valueOf(deletedAppsCount)+" related applications deleted. Emails not sent", HttpStatus.OK);
+				}
+			}
+
+		} else {
+			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.BAD_REQUEST.value(),
+					"Not a valid Status, only FILLED/ CANCELLED are allowed"), HttpStatus.BAD_REQUEST);
+		}
+
+		jobRepo.updateJobStatus(status, id);
+		String emailid = (String) request.getSession().getAttribute("email");
+
+		try {
+			sendEmail(emailid,
+					"Dear Employer,\n\nJob status with id " + job.getJobid() + " is updated successfully to " + status
+							+ ". Below are the job details:\nJob-Title: " + job.getJobtitle() + "\ndescription: "
+							+ job.getDescription() + ".\n\nThanks,\nJob-Borad.",
+					"Job with id " + id + " updated in Job-Board");
+			return new ResponseEntity<String>("Email sent successfully with the job details", HttpStatus.OK);
+		} catch (Exception ex) {
+			return new ResponseEntity<String>("Error sending email " + ex, HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+
+	}
+
+	// ------- Get all the applications of job for employer ------------
+	@RequestMapping(value = "/jobApplicants/{jobid}", method = { RequestMethod.GET })
+	public ResponseEntity<?> getJobApplicants(HttpServletRequest request, @PathVariable("jobid") Long id)
+			throws UnsupportedEncodingException {
+
+		Job job = jobRepo.findOne(id);
+		if (job == null) {
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.NOT_FOUND.value(), "Job with id " + id + " not found"),
+					HttpStatus.NOT_FOUND);
+		}
+
 		List<Application> appList = appRepo.findByJob(job);
 		List<GetApplicants> resList = new ArrayList<GetApplicants>();
-		
-		if(appList.isEmpty()){
-			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
-					"No applicants for the job."), HttpStatus.NOT_FOUND);
+
+		if (appList.isEmpty()) {
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.NOT_FOUND.value(), "No applicants for the job."),
+					HttpStatus.NOT_FOUND);
 		}
-		
-		for (Application a : appList){
+
+		for (Application a : appList) {
 			User u = userRepo.findOne(a.getUser().getUserid());
 			Profile p = profileRepo.findOne(u.getUserid());
-			GetApplicants tmp = new GetApplicants(a.getApplicationid(), a.getStatus(), p.getFirstname(), p.getLastname());
+			GetApplicants tmp = new GetApplicants(a.getApplicationid(), a.getStatus(), p.getFirstname(),
+					p.getLastname());
 			resList.add(tmp);
 		}
 		ResponseEntity<List<GetApplicants>> response = new ResponseEntity<List<GetApplicants>>(resList, HttpStatus.OK);
 		return response;
 	}
-	
-	
-	//------- Get all the applied jobs for user ------------	
-	@RequestMapping(value = "/user/getAppliedJobs", method = {RequestMethod.GET })
-	public ResponseEntity<?> getAppliedJobs(HttpServletRequest request, HttpEntity<String> httpEntity) 
+
+	// ------- Get all the applied jobs for user ------------
+	@RequestMapping(value = "/user/getAppliedJobs", method = { RequestMethod.GET })
+	public ResponseEntity<?> getAppliedJobs(HttpServletRequest request, HttpEntity<String> httpEntity)
 			throws UnsupportedEncodingException {
-		
+
 		String emailid = (String) request.getSession().getAttribute("email");
-		
+
 		User user = userRepo.findByEmailid(emailid);
 
 		if (user == null) {
-			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
-					"Uers with emailid " +emailid + " not found"), HttpStatus.NOT_FOUND);
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.NOT_FOUND.value(), "Uers with emailid " + emailid + " not found"),
+					HttpStatus.NOT_FOUND);
 		}
-		
+
 		List<Application> appList = appRepo.findByUserAndType(user, ApplicationType.APPLIED);
-		
-		if(appList.isEmpty()){
-			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
-					"No applied jobs for the user."), HttpStatus.NOT_FOUND);
+
+		if (appList.isEmpty()) {
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.NOT_FOUND.value(), "No applied jobs for the user."),
+					HttpStatus.NOT_FOUND);
 		}
-		
+
 		ResponseEntity<List<Application>> response = new ResponseEntity<List<Application>>(appList, HttpStatus.OK);
 		return response;
 	}
-	
-	
-	//------- Get all the interested jobs for user ------------	
-	@RequestMapping(value = "/user/getInterestedJobs", method = {RequestMethod.GET })
-	public ResponseEntity<?> getInterestedJobs(HttpServletRequest request, HttpEntity<String> httpEntity) 
+
+	// ------- Get all the interested jobs for user ------------
+	@RequestMapping(value = "/user/getInterestedJobs", method = { RequestMethod.GET })
+	public ResponseEntity<?> getInterestedJobs(HttpServletRequest request, HttpEntity<String> httpEntity)
 			throws UnsupportedEncodingException {
-		
+
 		String emailid = (String) request.getSession().getAttribute("email");
-		
+
 		User user = userRepo.findByEmailid(emailid);
 
 		if (user == null) {
-			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
-					"Uers with emailid " +emailid + " not found"), HttpStatus.NOT_FOUND);
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.NOT_FOUND.value(), "Uers with emailid " + emailid + " not found"),
+					HttpStatus.NOT_FOUND);
 		}
-		
+
 		List<Application> appList = appRepo.findByUserAndType(user, ApplicationType.INTERESTED);
-		
-		if(appList.isEmpty()){
-			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
-					"No jobs are marked interested for the user."), HttpStatus.NOT_FOUND);
+
+		if (appList.isEmpty()) {
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.NOT_FOUND.value(), "No jobs are marked interested for the user."),
+					HttpStatus.NOT_FOUND);
 		}
-		
+
 		ResponseEntity<List<Application>> response = new ResponseEntity<List<Application>>(appList, HttpStatus.OK);
 		return response;
 	}
-		
-	
-	//----------- Job search by job seeker -----------------
+
+	// ----------- Job search by job seeker -----------------
 	@RequestMapping(value = "/jobs/search/{searchTerm}/{companyName}/{location}/{salaryRange}", method = {
 			RequestMethod.GET })
 	public ResponseEntity<?> searchJobUser(HttpServletRequest request, @PathVariable("searchTerm") String freeText,
@@ -648,16 +698,16 @@ public class WebController {
 		return res;
 	}
 
-	public void sendEmail(String recepient, String msg, String subject) throws Exception{
-        MimeMessage message = sender.createMimeMessage();
-        MimeMessageHelper helper = new MimeMessageHelper(message);
-        
-        helper.setTo(recepient);
-        helper.setText(msg);
-        helper.setSubject(subject);
-        
-        sender.send(message);
-    }
+	public void sendEmail(String recepient, String msg, String subject) throws Exception {
+		MimeMessage message = sender.createMimeMessage();
+		MimeMessageHelper helper = new MimeMessageHelper(message);
+
+		helper.setTo(recepient);
+		helper.setText(msg);
+		helper.setSubject(subject);
+
+		sender.send(message);
+	}
 
 	public static List<Job> my_intersect(List<Job> a, List<Job> b) {
 		List<Job> result = new ArrayList<Job>();
@@ -669,28 +719,29 @@ public class WebController {
 		}
 		return result;
 	}
-	
+
 	// Custom Classes
-	public class GetApplicants{
-	   private Long id;
-	   private ApplicationStatus status;
-	   private String firstname;
-	   private String lastname;
-	   
-	   public GetApplicants(Long id, ApplicationStatus status, String firstname, String lastname)
-	   {
-	      this.id = id;
-	      this.status = status;
-	      this.firstname = firstname;
-	      this.lastname = lastname;
-	   }
-	   public Long getId() {
+	public class GetApplicants {
+		private Long id;
+		private ApplicationStatus status;
+		private String firstname;
+		private String lastname;
+
+		public GetApplicants(Long id, ApplicationStatus status, String firstname, String lastname) {
+			this.id = id;
+			this.status = status;
+			this.firstname = firstname;
+			this.lastname = lastname;
+		}
+
+		public Long getId() {
 			return id;
 		}
 
 		public void setId(Long id) {
 			this.id = id;
 		}
+
 		public ApplicationStatus getStatus() {
 			return status;
 		}
@@ -698,6 +749,7 @@ public class WebController {
 		public void setStatus(ApplicationStatus status) {
 			this.status = status;
 		}
+
 		public String getFirstname() {
 			return firstname;
 		}
@@ -705,6 +757,7 @@ public class WebController {
 		public void setFirstname(String firstname) {
 			this.firstname = firstname;
 		}
+
 		public String getLastname() {
 			return lastname;
 		}

@@ -6,6 +6,7 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -190,11 +191,6 @@ public class OtherController {
 					new ControllerError(HttpStatus.FORBIDDEN.value(), "User not logged in"), HttpStatus.FORBIDDEN);
 		}
 
-		// read body
-		String body = httpEntity.getBody();
-		System.out.println(body);
-		JsonElement jelem = gson.fromJson(body, JsonElement.class);
-		JsonObject jobj = jelem.getAsJsonObject();
 		String emailid = (String) request.getSession().getAttribute("email");
 		System.out.println("inside apply : Email ---> " + emailid);
 
@@ -214,32 +210,57 @@ public class OtherController {
 			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.FORBIDDEN.value(),
 					"Please create your profile before applying for a job"), HttpStatus.FORBIDDEN);
 		}
-
-		ApplicationStatus status = ApplicationStatus.PENDING;
-
-		ApplicationType type = null;
-		if (jobj.get("applicationType") != null) {
-			switch (jobj.get("applicationType").getAsString()) {
-			case "interested":
-				type = ApplicationType.INTERESTED;
-				break;
-			case "applied":
-				type = ApplicationType.APPLIED;
-				break;
-			default:
-				return new ResponseEntity<ControllerError>(
-						new ControllerError(HttpStatus.BAD_REQUEST.value(),
-								"\"applicationType\" can be either \"interested\" or \"applied\""),
-						HttpStatus.BAD_REQUEST);
-			}
-		} else {
-			type = ApplicationType.APPLIED;
+		
+		//limit 5 applications per user
+		List<Application> userApps = appRepo.findByUser(user);
+		if(userApps.size() >= 5){
+			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.FORBIDDEN.value(),
+					"Sorry, you can only apply to 5 jobs at a time."), HttpStatus.FORBIDDEN);
 		}
+		ApplicationStatus status = ApplicationStatus.PENDING;
+		ApplicationType type = null;
+
+		// read body
+		String body = httpEntity.getBody();
+		System.out.print("Request Body: ");
+		System.out.println(body);
+		if (body == null || equals(body.isEmpty())) {
+			type = ApplicationType.APPLIED;
+		} else {
+			JsonElement jelem = gson.fromJson(body, JsonElement.class);
+			JsonObject jobj = jelem.getAsJsonObject();
+
+			if (jobj.get("applicationType") != null) {
+				switch (jobj.get("applicationType").getAsString()) {
+				case "interested":
+					type = ApplicationType.INTERESTED;
+					break;
+				case "applied":
+					type = ApplicationType.APPLIED;
+					break;
+				default:
+					return new ResponseEntity<ControllerError>(
+							new ControllerError(HttpStatus.BAD_REQUEST.value(),
+									"\"applicationType\" can be either \"interested\" or \"applied\""),
+							HttpStatus.BAD_REQUEST);
+				}
+			} else {
+				type = ApplicationType.APPLIED;
+			}
+		}
+
 		Application application = new Application(user, job, type, status);
 
 		// TODO: catch duplicate row/ unique constraint fail
-		appRepo.save(application);
+		try {
+			appRepo.save(application);
+		} catch (DataIntegrityViolationException e) {
+			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.CONFLICT.value(),
+					"You have already applied for this job. " + "Your emailID: " + emailid + ". Job ID: " + jobId),
+					HttpStatus.CONFLICT);
+		}
 
+		//email
 		String subject = "Thank you for applying to " + job.getCompany().getName() + " via Job-Board";
 		try {
 			controller.sendEmail(user.getEmailid(),
@@ -521,6 +542,13 @@ public class OtherController {
 		return new ResponseEntity<Application>(application, HttpStatus.OK);
 	}
 
+	/**
+	 * 21) Get Job seeker Profile using application_id [GET]
+	 * 
+	 * @param request
+	 * @param emailid
+	 * @return profile object
+	 */
 	@RequestMapping(value = "/getProfile/{emailid:.+}", method = { RequestMethod.GET })
 	public ResponseEntity<?> getProfile(HttpServletRequest request, @PathVariable String emailid) {
 		// TODO: maybe check if user loggedIn
