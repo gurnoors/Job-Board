@@ -226,7 +226,6 @@ public class OtherController {
 			JsonElement jelem = gson.fromJson(body, JsonElement.class);
 			JsonObject jobj = jelem.getAsJsonObject();
 
-//TODO: fix
 			if (jobj.get("applicationType") != null) {
 				switch (jobj.get("applicationType").getAsString().toUpperCase()) {
 				case "INTERESTED":
