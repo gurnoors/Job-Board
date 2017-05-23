@@ -41,7 +41,14 @@
             </div>
         <div class="container">
             <div ng-app="myApp" ng-controller="employerDashboardCtrl">
-            <div ng-repeat="job in postedJobs">
+            <div>
+            	<b>Filter Postings By Status:</b>
+            	<select ng-model="selectedStatus" ng-options="status for status in Statuses">
+           	 		
+				</select>
+				<br></br>
+			</div>
+            <div ng-repeat="job in postedJobs| filter: { status: selectedStatus}">
             	<div style="border:1px solid black;text-align:left">
             		<div style="margin-left: 5px"> <b>Id:</b> {{ job.jobid }}</div>
  					<div style="margin-left: 5px"><b>Position:</b> {{ job.jobtitle }}</div>
