@@ -582,7 +582,7 @@ function acceptOffer(jobReq)
 	    	if (status == 200) {
 	    			alert("Offer accepted!!!");
 	    		}
-	    }
+	    });
 }
 
 function rejectOffer(jobReq)
@@ -604,7 +604,7 @@ function rejectOffer(jobReq)
 	    	if (status == 200) {
 	    			alert("Offer rejected!!!");
 	    		}
-	    }
+	    });
 }
 
 function cancelApplication(jobReq)
@@ -626,7 +626,7 @@ function cancelApplication(jobReq)
 	    	if (status == 200) {
 	    			alert("Application cancelled!!!");
 	    		}
-	    }
+	    });
 }
 
 
