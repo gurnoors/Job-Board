@@ -213,13 +213,6 @@ public class OtherController {
 					"Please create your profile before applying for a job"), HttpStatus.FORBIDDEN);
 		}
 
-		// limit 5 applications per user
-		List<Application> userApps = appRepo.findByUser(user);
-		if (userApps.size() >= 5) {
-			return new ResponseEntity<ControllerError>(
-					new ControllerError(HttpStatus.FORBIDDEN.value(), "Sorry, you can only apply to 5 jobs at a time."),
-					HttpStatus.FORBIDDEN);
-		}
 		ApplicationStatus status = ApplicationStatus.PENDING;
 		ApplicationType type = null;
 
@@ -240,6 +233,13 @@ public class OtherController {
 					break;
 				case "APPLIED":
 					type = ApplicationType.APPLIED;
+					// limit 5 applications per user
+					// List<Application> userApps = appRepo.findByUser(user);
+					List<Application> userApps = appRepo.findByUserAndType(user, ApplicationType.APPLIED);
+					if (userApps != null && userApps.size() >= 5) {
+						return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.FORBIDDEN.value(),
+								"Sorry, you can only apply to 5 jobs at a time."), HttpStatus.FORBIDDEN);
+					}
 					break;
 				case "NULL":
 					// mark as not interested
@@ -576,4 +576,29 @@ public class OtherController {
 		return new ResponseEntity<Profile>(profile, HttpStatus.OK);
 	}
 
+	/**
+	 * 22) Get Employer (logedIn) [GET]
+	 * 
+	 * @param request
+	 * @return Company object
+	 */
+	@RequestMapping(value = "/employer", method = { RequestMethod.GET })
+	public ResponseEntity<?> getEmployer(HttpServletRequest request) {
+		// sanity checks
+		System.out.println("isLogged IN --> " + (String) request.getSession().getAttribute("loggedIn"));
+		System.out.println("LoggedIn Email: "+ (String) request.getSession().getAttribute("email"));
+		if (request.getSession().getAttribute("loggedIn") == null
+				|| !((String) request.getSession().getAttribute("loggedIn")).equals("employer")) {
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.FORBIDDEN.value(), "Employer not logged in"), HttpStatus.FORBIDDEN);
+		}
+		String emailid = (String) request.getSession().getAttribute("email");
+		Company company = compRepo.findByEmailid(emailid);
+		if (company == null) {
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.NOT_FOUND.value(), "Employer with email id " + emailid + " not found"),
+					HttpStatus.NOT_FOUND);
+		}
+		return new ResponseEntity<Company>(company, HttpStatus.OK);
+	}
 }
