@@ -6,6 +6,7 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -174,6 +175,8 @@ public class OtherController {
 	/**
 	 * apply job
 	 * 
+	 * Request Body { applicationType : “interested”/ “applied” /“null” }
+	 * 
 	 * @param request
 	 * @param jobId
 	 * @return
@@ -190,11 +193,6 @@ public class OtherController {
 					new ControllerError(HttpStatus.FORBIDDEN.value(), "User not logged in"), HttpStatus.FORBIDDEN);
 		}
 
-		// read body
-		String body = httpEntity.getBody();
-		System.out.println(body);
-		JsonElement jelem = gson.fromJson(body, JsonElement.class);
-		JsonObject jobj = jelem.getAsJsonObject();
 		String emailid = (String) request.getSession().getAttribute("email");
 		System.out.println("inside apply : Email ---> " + emailid);
 
@@ -215,31 +213,63 @@ public class OtherController {
 					"Please create your profile before applying for a job"), HttpStatus.FORBIDDEN);
 		}
 
-		ApplicationStatus status = ApplicationStatus.PENDING;
-
-		ApplicationType type = null;
-		if (jobj.get("applicationType") != null) {
-			switch (jobj.get("applicationType").getAsString()) {
-			case "interested":
-				type = ApplicationType.INTERESTED;
-				break;
-			case "applied":
-				type = ApplicationType.APPLIED;
-				break;
-			default:
-				return new ResponseEntity<ControllerError>(
-						new ControllerError(HttpStatus.BAD_REQUEST.value(),
-								"\"applicationType\" can be either \"interested\" or \"applied\""),
-						HttpStatus.BAD_REQUEST);
-			}
-		} else {
-			type = ApplicationType.APPLIED;
+		// limit 5 applications per user
+		List<Application> userApps = appRepo.findByUser(user);
+		if (userApps.size() >= 5) {
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.FORBIDDEN.value(), "Sorry, you can only apply to 5 jobs at a time."),
+					HttpStatus.FORBIDDEN);
 		}
+		ApplicationStatus status = ApplicationStatus.PENDING;
+		ApplicationType type = null;
+
+		// read body
+		String body = httpEntity.getBody();
+		System.out.print("Request Body: ");
+		System.out.println(body);
+		if (body == null || equals(body.isEmpty())) {
+			type = ApplicationType.APPLIED;
+		} else {
+			JsonElement jelem = gson.fromJson(body, JsonElement.class);
+			JsonObject jobj = jelem.getAsJsonObject();
+
+//TODO: fix
+			if (jobj.get("applicationType") != null) {
+				switch (jobj.get("applicationType").getAsString().toUpperCase()) {
+				case "INTERESTED":
+					type = ApplicationType.INTERESTED;
+					break;
+				case "APPLIED":
+					type = ApplicationType.APPLIED;
+					break;
+				case "NULL":
+					// mark as not interested
+					Application existingApp = appRepo.findByJobAndUser(job, user);
+					// TODO: maybe assuming existingApp exists
+					appRepo.delete(existingApp);
+					return new ResponseEntity<String>("Marked as not interested", HttpStatus.OK);
+				default:
+					return new ResponseEntity<ControllerError>(
+							new ControllerError(HttpStatus.BAD_REQUEST.value(),
+									"\"applicationType\" can be either \"interested\" or \"applied\""),
+							HttpStatus.BAD_REQUEST);
+				}
+			} else {
+				type = ApplicationType.APPLIED;
+			}
+		}
+
 		Application application = new Application(user, job, type, status);
 
-		// TODO: catch duplicate row/ unique constraint fail
-		appRepo.save(application);
+		try {
+			appRepo.save(application);
+		} catch (DataIntegrityViolationException e) {
+			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.CONFLICT.value(),
+					"You have already applied for this job. " + "Your emailID: " + emailid + ". Job ID: " + jobId),
+					HttpStatus.CONFLICT);
+		}
 
+		// email
 		String subject = "Thank you for applying to " + job.getCompany().getName() + " via Job-Board";
 		try {
 			controller.sendEmail(user.getEmailid(),
@@ -424,7 +454,6 @@ public class OtherController {
 	@RequestMapping(value = "/user/processApplication", method = { RequestMethod.POST })
 	@ResponseBody
 	public ResponseEntity<?> userProcessApplication(HttpServletRequest request, HttpEntity<String> httpEntity) {
-		// TODO: mustDo !!!!!!copy pasted method, wrong
 
 		System.out.println("isLogged IN --> " + (String) request.getSession().getAttribute("loggedIn"));
 		System.out.println((String) request.getSession().getAttribute("email"));
@@ -519,6 +548,33 @@ public class OtherController {
 			return new ResponseEntity<String>("null", HttpStatus.OK);
 		}
 		return new ResponseEntity<Application>(application, HttpStatus.OK);
+	}
+
+	/**
+	 * 21) Get Job seeker Profile using application_id [GET]
+	 * 
+	 * @param request
+	 * @param emailid
+	 * @return profile object
+	 */
+	@RequestMapping(value = "/getProfile/{emailid:.+}", method = { RequestMethod.GET })
+	public ResponseEntity<?> getProfile(HttpServletRequest request, @PathVariable String emailid) {
+		// TODO: maybe check if user loggedIn
+		System.out.println("---" + emailid + "---");
+		User user = userRepo.findByEmailid(emailid);
+		if (user == null) {
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.NOT_FOUND.value(), "User with email id " + emailid + " not found"),
+					HttpStatus.NOT_FOUND);
+		}
+		Profile profile = profileRepo.findOne(user.getUserid());
+		if (profile == null) {
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.NOT_FOUND.value(),
+							"User with email id " + emailid + " has signed up, but not created a profile yet."),
+					HttpStatus.NOT_FOUND);
+		}
+		return new ResponseEntity<Profile>(profile, HttpStatus.OK);
 	}
 
 }
