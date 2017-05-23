@@ -23,6 +23,7 @@ import org.springframework.util.FastByteArrayOutputStream;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -47,6 +48,8 @@ import com.springJava.jobTracker.repo.UserRepo;
 @RestController
 @Transactional(propagation = Propagation.REQUIRES_NEW)
 public class WebController {
+	private static final int NO_OF_RESULTS_PER_PAGE = 5;
+
 	Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
 	@Autowired
@@ -571,7 +574,7 @@ public class WebController {
 			RequestMethod.GET })
 	public ResponseEntity<?> searchJobUser(HttpServletRequest request, @PathVariable("searchTerm") String freeText,
 			@PathVariable("companyName") String companyname, @PathVariable("location") String location,
-			@PathVariable("salaryRange") String salary1) throws UnsupportedEncodingException {
+			@PathVariable("salaryRange") String salary1, @RequestParam(required=false, value="number") String resultOffset ) throws UnsupportedEncodingException {
 
 		int salary = Integer.parseInt(salary1);
 		List<Job> freeList = new ArrayList<Job>();
@@ -624,6 +627,35 @@ public class WebController {
 			return new ResponseEntity<ControllerError>(
 					new ControllerError(HttpStatus.NOT_FOUND.value(), "No job match."), HttpStatus.NOT_FOUND);
 		}
+		
+		
+		//pagination hack
+		if(resultOffset != null){
+			int start = Integer.parseInt(resultOffset)-1;
+			int end = start + NO_OF_RESULTS_PER_PAGE;
+			end -= end % NO_OF_RESULTS_PER_PAGE;
+			int size = res_list.size();
+			
+			List<Job> paginatedResults = null;
+			if(start == end){
+				paginatedResults = new ArrayList<>();
+			}
+			
+			if(start >= 0 && start < size){
+//				end -= end % (size+1);
+				if(end > size){
+					end = size;
+				}
+				paginatedResults = res_list.subList(start, end);
+			}else{
+				paginatedResults = new ArrayList<>();
+			}
+			ResponseEntity<List<Job>> response = new ResponseEntity<List<Job>>(paginatedResults, HttpStatus.OK);
+			return response;
+			
+		}
+		
+		
 		ResponseEntity<List<Job>> response = new ResponseEntity<List<Job>>(res_list, HttpStatus.OK);
 		return response;
 	}

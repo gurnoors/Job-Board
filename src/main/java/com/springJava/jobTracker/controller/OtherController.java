@@ -175,6 +175,8 @@ public class OtherController {
 	/**
 	 * apply job
 	 * 
+	 * Request Body { applicationType : “interested”/ “applied” /“null” }
+	 * 
 	 * @param request
 	 * @param jobId
 	 * @return
@@ -210,12 +212,13 @@ public class OtherController {
 			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.FORBIDDEN.value(),
 					"Please create your profile before applying for a job"), HttpStatus.FORBIDDEN);
 		}
-		
-		//limit 5 applications per user
+
+		// limit 5 applications per user
 		List<Application> userApps = appRepo.findByUser(user);
-		if(userApps.size() >= 5){
-			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.FORBIDDEN.value(),
-					"Sorry, you can only apply to 5 jobs at a time."), HttpStatus.FORBIDDEN);
+		if (userApps.size() >= 5) {
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.FORBIDDEN.value(), "Sorry, you can only apply to 5 jobs at a time."),
+					HttpStatus.FORBIDDEN);
 		}
 		ApplicationStatus status = ApplicationStatus.PENDING;
 		ApplicationType type = null;
@@ -238,6 +241,12 @@ public class OtherController {
 				case "APPLIED":
 					type = ApplicationType.APPLIED;
 					break;
+				case "NULL":
+					// mark as not interested
+					Application existingApp = appRepo.findByJobAndUser(job, user);
+					// TODO: maybe assuming existingApp exists
+					appRepo.delete(existingApp);
+					return new ResponseEntity<String>("Marked as not interested", HttpStatus.OK);
 				default:
 					return new ResponseEntity<ControllerError>(
 							new ControllerError(HttpStatus.BAD_REQUEST.value(),
@@ -259,7 +268,7 @@ public class OtherController {
 					HttpStatus.CONFLICT);
 		}
 
-		//email
+		// email
 		String subject = "Thank you for applying to " + job.getCompany().getName() + " via Job-Board";
 		try {
 			controller.sendEmail(user.getEmailid(),
