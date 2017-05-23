@@ -508,7 +508,7 @@ public class WebController {
 			User u = userRepo.findOne(a.getUser().getUserid());
 			Profile p = profileRepo.findOne(u.getUserid());
 			GetApplicants tmp = new GetApplicants(a.getApplicationid(), a.getStatus(), p.getFirstname(),
-					p.getLastname());
+					p.getLastname(), u.getEmailid());
 			resList.add(tmp);
 		}
 		ResponseEntity<List<GetApplicants>> response = new ResponseEntity<List<GetApplicants>>(resList, HttpStatus.OK);
@@ -758,12 +758,14 @@ public class WebController {
 		private ApplicationStatus status;
 		private String firstname;
 		private String lastname;
+		private String emailid;
 
-		public GetApplicants(Long id, ApplicationStatus status, String firstname, String lastname) {
+		public GetApplicants(Long id, ApplicationStatus status, String firstname, String lastname, String emailid) {
 			this.id = id;
 			this.status = status;
 			this.firstname = firstname;
 			this.lastname = lastname;
+			this.emailid = emailid;
 		}
 
 		public Long getId() {
@@ -796,6 +798,14 @@ public class WebController {
 
 		public void setLastname(String lastname) {
 			this.lastname = lastname;
+		}
+
+		public String getEmailid() {
+			return emailid;
+		}
+
+		public void setEmailid(String emailid) {
+			this.emailid = emailid;
 		}
 	}
 }
