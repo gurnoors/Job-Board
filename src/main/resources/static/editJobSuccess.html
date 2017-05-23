@@ -25,14 +25,19 @@
     <div class="row">
         <div class="col-md-12">
             <div class="panel-title text-center">
-                <h1 class="title"> Post a Job </h1>
+                <h1 class="title"> Updated Job Posting Details </h1>
             </div>
          
         <div class="container" >
-          <div>
-           Position updated successfully.
-          </div>
-          <input type="submit" id="submit" class="btn btn-primary btn-lg login-button" value="Dashboard" ng-click="gotoDashboard()"/>
+          <div class="container" >
+          <div><b>Position Title:</b> {{ job.jobtitle }}</div>
+          <div><b>Description:</b> {{ job.description }}</div>
+          <div><b>Location:</b> {{ job.location }}</div>
+          <div><b>Salary:</b> {{ job.salary }}</div>
+          <div><b>Required Skill:</b> {{ job.skill }}</div>
+          <div><b>Status:</b> {{ job.status }}</div>
+          <br></br>
+          <input type="submit" id="submit" class="btn btn-primary btn-lg login-button" value="<Back to Dashboard" ng-click="gotoDashboard()"/>
         </div>
         </div>
         </div>

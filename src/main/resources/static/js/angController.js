@@ -261,8 +261,7 @@ app.controller('viewJobCtrl', function($scope, $http, $window) {
 	$scope.rejectApplication = function (job, email_id){ 
 		console.log("rejected");
 		console.log(job);
-		console.log(id);
-		employer/processApplication/
+		console.log(email_id);
 		$http({
 	        url: 'employer/processApplication/',
 	        method: 'POST',
@@ -291,7 +290,8 @@ app.controller('viewJobCtrl', function($scope, $http, $window) {
 	    }).then(function successCallback(data) 
 	    		{ 
 	    		console.log(data);
-	    		
+	    		$window.alert("Applicantion Rejected Successfully");
+	    		$window.location.href = "/viewPosting.html";
 	    		}, 
 	    		function err(data) 
 	    		{
@@ -300,10 +300,10 @@ app.controller('viewJobCtrl', function($scope, $http, $window) {
 	    		});
 	};
 	
-	$scope.offerJob = function (job, id){ 
+	$scope.offerJob = function (job, email_id){ 
 		console.log("offered");
 		console.log(job);
-		console.log(id);
+		console.log(email_id);
 		$http({
 	        url: 'employer/processApplication/',
 	        method: 'POST',
@@ -332,7 +332,8 @@ app.controller('viewJobCtrl', function($scope, $http, $window) {
 	    }).then(function successCallback(data) 
 	    		{ 
 	    		console.log(data);
-	    		
+	    		$window.alert("Job has been offered to the applicant successfully");
+	    		$window.location.href = "/viewPosting.html";
 	    		}, 
 	    		function err(data) 
 	    		{
@@ -368,14 +369,15 @@ app.controller('viewJobCtrl', function($scope, $http, $window) {
     		{ 
     		console.log(data.data);
     		$scope.applicants = data.data;
+    		$scope.disableFilled=true;
     		var i;
     		for(i=0;i<$scope.applicants.length ; i++)
     			{
     			console.log($scope.applicants[i]);
-    			if($scope.applicants[i].status == "FILLED")
+    			if($scope.applicants[i].status == "OFFER_ACCEPTED")
     				{
     				$scope.disableCancel=true;
-    				$scope.disableFilled=true;
+    				$scope.disableFilled=false;
     				}
     			};
     		}, 
@@ -451,11 +453,9 @@ app.controller('editJobSuccessCtrl', function($scope, $http, $window) {
 	}
 });
 
-app.controller('editCompanyCtrl', function($scope, $http, $window) {
+app.controller('editEmployerProfileCtrl', function($scope, $http, $window) {
 	
 	$scope.company = {};
-	$scope.job = JSON.parse($window.localStorage.getItem("jobToEdit"));
-	console.log($scope.job);
 	$scope.submitCompanyData = function (){ 
 		
 		$http({
@@ -468,8 +468,13 @@ app.controller('editCompanyCtrl', function($scope, $http, $window) {
         							console.log("error");
         							return data;
         						}
-        						else{
-        							data= JSON.parse(data);
+        						else if(status=='404')
+        							{
+        								console.log("error");
+        								return data;
+        							}
+        						else if(status=='200')
+        						{
         							return data;
         						}; 
         					
@@ -482,13 +487,13 @@ app.controller('editCompanyCtrl', function($scope, $http, $window) {
         }
     }).then(function successCallback(data) 
     		{ 
-    		console.log(data.data);
+    		console.log("success");
+    		$window.alert("Update success");
     		$window.location.href = "/EmployerDashboard.html";
     		}, 
     		function err(data) 
     		{
     		 console.log("error"); 
-    		 console.log(data.data.badRequest.msg);
     		});
 	}
 });
@@ -498,6 +503,9 @@ app.controller('editCompanyCtrl', function($scope, $http, $window) {
 app.controller('viewJobApplicantCtrl', function($scope, $http, $window) {
 	$scope.profile= JSON.parse($window.localStorage.getItem("applicant"));
 	console.log($scope.profile);
+	$scope.gotoDashboard = function (){ 
+		$window.location.href = "/EmployerDashboard.html";
+	}
 });
 
 
