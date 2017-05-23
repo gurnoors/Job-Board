@@ -33,7 +33,7 @@
         <div class="main-login main-center">
             <form ng-submit="submitData()" name="signUpForm">
             	<div class="error" ng-message="serverErrors" data-ng-show="signUpForm.$submitted" data-ng-cloak>
-            		<p data-ng-message="emailexists">Email already exists!!</p>
+            		<p data-ng-message="emailexists">{{errorMessage}}</p>
             		<br></br>
         		</div>
             	<label for="name" class="cols-sm-2 control-label">Jobseeker Name</label>

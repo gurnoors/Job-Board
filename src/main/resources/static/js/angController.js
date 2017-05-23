@@ -13,13 +13,14 @@ app.controller('jobSeekerSignUpCtrl', function($scope, $http, $window) {
             method: 'POST',
             transformResponse: function (data, headersGetter, status) 
             					{ 
-            						if(status=='201')
+            						if(status=='200')
             						{	
             							console.log("sample");
             							return data;
             						}
-            						else{
-            							data= JSON.parse(data);
+            						else if(status=='400'){
+            							console.log(data);
+            							data= JSON.parse(data);					
             							return data;
             						}; 
             					
@@ -38,7 +39,7 @@ app.controller('jobSeekerSignUpCtrl', function($scope, $http, $window) {
         		{
         		 console.log("error"); 
         		 console.log(data.data.badRequest.msg);
-        		 $scope.serverMsg = data.data.badRequest.msg;
+        		 $scope.errorMessage = data.data.badRequest.msg;
         		});
     	}
  });
@@ -46,6 +47,9 @@ app.controller('jobSeekerSignUpCtrl', function($scope, $http, $window) {
 app.controller('employerDashboardCtrl', function($scope, $http, $window) {
 	
 	$scope.postedJobs = {};
+	
+	$scope.Statuses = ["OPEN", "FILLED", "CANCELLED"];
+	
 	$http({
         url: '/employer/jobs',
         method: 'GET',
@@ -215,23 +219,126 @@ app.controller('viewJobCtrl', function($scope, $http, $window) {
 	    		});
 	};
 	
+	$scope.viewApplicant = function (job, emailid){ 
+		console.log("viewed");
+		console.log(job);
+		console.log(emailid);
+		$http({
+	        url: '/getProfile/'+ emailid,
+	        method: 'GET',
+	        transformResponse: function (data, headersGetter, status) 
+	        					{ 
+	        						if(status=='400')
+	        						{	
+	        							console.log("error");
+	        							return JSON.parse(data).badRequest.msg;
+	        						}
+	        						else if(status=='200')
+	        						{
+	        							console.log(data);
+	        							
+	        							return JSON.parse(data);
+	        						}
+	        						else{
+	        							data= JSON.parse(data);
+	        							return data;
+	        						}; 
+	        					
+	        					}
+	    }).then(function successCallback(data) 
+	    		{ 
+	    		console.log(data);
+	    		$window.localStorage.setItem("applicant", JSON.stringify(data.data));
+	    		$window.location.href = "/viewJobApplicant.html"
+	    		}, 
+	    		function err(data) 
+	    		{
+	    		 console.log("error");
+	    		 console.log(data.data);
+	    		});
+	};
+	
+	$scope.rejectApplication = function (job, email_id){ 
+		console.log("rejected");
+		console.log(job);
+		console.log(id);
+		employer/processApplication/
+		$http({
+	        url: 'employer/processApplication/',
+	        method: 'POST',
+	        data: {	emailid: email_id,
+	        		status: "REJECTED",
+	        		jobid: job.jobid
+	        },
+	        transformResponse: function (data, headersGetter, status) 
+	        					{ 
+	        						if(status=='400')
+	        						{	
+	        							console.log("error");
+	        							return JSON.parse(data).badRequest.msg;
+	        						}
+	        						else if(status=='200')
+	        						{
+	        							console.log(data);
+	        							return data;
+	        						}
+	        						else{
+	        							data= JSON.parse(data);
+	        							return data;
+	        						}; 
+	        					
+	        					}
+	    }).then(function successCallback(data) 
+	    		{ 
+	    		console.log(data);
+	    		
+	    		}, 
+	    		function err(data) 
+	    		{
+	    		 console.log("error");
+	    		 console.log(data.data);
+	    		});
+	};
+	
 	$scope.offerJob = function (job, id){ 
 		console.log("offered");
 		console.log(job);
 		console.log(id);
-	};
-	
-	$scope.rejectApplication = function (job, id){ 
-		console.log("rejected");
-		console.log(job);
-		console.log(id);
-	};
-	
-	$scope.viewApplicant = function (job, id){ 
-		console.log("viewedProfile");
-		console.log(job);
-		console.log(id);
-		$window.location.href = "/applicantProfile.html";
+		$http({
+	        url: 'employer/processApplication/',
+	        method: 'POST',
+	        data: {	emailid: email_id,
+	        		status: "OFFERED",
+	        		jobid: job.jobid
+	        },
+	        transformResponse: function (data, headersGetter, status) 
+	        					{ 
+	        						if(status=='400')
+	        						{	
+	        							console.log("error");
+	        							return JSON.parse(data).badRequest.msg;
+	        						}
+	        						else if(status=='200')
+	        						{
+	        							console.log(data);
+	        							return data;
+	        						}
+	        						else{
+	        							data= JSON.parse(data);
+	        							return data;
+	        						}; 
+	        					
+	        					}
+	    }).then(function successCallback(data) 
+	    		{ 
+	    		console.log(data);
+	    		
+	    		}, 
+	    		function err(data) 
+	    		{
+	    		 console.log("error");
+	    		 console.log(data.data);
+	    		});
 		
 	};
 	
@@ -276,10 +383,6 @@ app.controller('viewJobCtrl', function($scope, $http, $window) {
     		{
     		 console.log("error");
     		 console.log(data.data);
-    		 $scope.applicants = [
- 				{"id":"1", "status":"pending", "firstname":"anudeep", "lastname": "chinta"},
- 				{"id":"2", "status":"pending", "firstname":"edava", "lastname": "chinta"}
- 		];
     		});
 });
 
@@ -389,3 +492,12 @@ app.controller('editCompanyCtrl', function($scope, $http, $window) {
     		});
 	}
 });
+
+
+
+app.controller('viewJobApplicantCtrl', function($scope, $http, $window) {
+	$scope.profile= JSON.parse($window.localStorage.getItem("applicant"));
+	console.log($scope.profile);
+});
+
+
