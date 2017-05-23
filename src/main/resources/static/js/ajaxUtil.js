@@ -218,11 +218,11 @@ function loadAppliedViewPage() {
                   '<p id = "jobStatus-'+jobId+'"><b>'+applicationStatus+'</b></p> ' +
                   '</div>'+
                   '<div class="form-group">'+
-                 '<button type="button" id = "Accept-' +jobId+'"class="btn btn-primary btn-group-horizontal login-button">'+
+                 '<button type="button" id = "Accept-' +jobId+'"class="btn btn-primary btn-group-horizontal login-button" onclick="acceptOffer(jobId)">'+
                  'Accept</button>&nbsp'+
-                  '<button type="button" id = "Reject-' +jobId+'"class="btn btn-primary btn-group-horizontal login-button">'+
+                  '<button type="button" id = "Reject-' +jobId+'"class="btn btn-primary btn-group-horizontal login-button"  onclick="rejectOffer(jobId)">'+
                   'Reject</button>&nbsp'+
-                  '<button type="button" id = "Cancel-' +jobId+'"class="btn btn-primary btn-group-horizontal login-button">'+
+                  '<button type="button" id = "Cancel-' +jobId+'"class="btn btn-primary btn-group-horizontal login-button"  onclick="cancelApplication(jobId)">'+
                   'Cancel</button>&nbsp'+
                   '</div></div>';
 
@@ -383,13 +383,14 @@ function loadjobviewPage()
             $('p#location').text("Location : "+location);
             $('p#salary').text("Salary : "+salary);
             $('p#company').text("Company : "+ company["name"]);
-            
+         
+            checkStatus(jobid);
+          
         } 
     });
     
-
     
-   
+
 
 }
 
@@ -434,82 +435,198 @@ function interested(e) {
     e.preventDefault();
     var jobID;
     jobID = localStorage.getItem("jobId");
+    var checkStatusObj = {};
     
-    if(checkStatus(jobID))
-     { 
-    	var applyRequestObj = {};
+    alert("Checking the status now!!!!!");
     
-    	applyRequestObj["applicationType"] = "interested";
+    var p = checkStatus(jobID);
+    
+    var applyRequestObj = {};
+    $.when(p).done(	function() {
+    	
+    		alert("Succesfully Checked the status now!!!!!");
+    	
+
+    		
+    	checkStatusObj = localStorage.getItem("checkStatusResultObj");
+    	
+    	if(checkStatusObj == "null")
+    		applyRequestObj["applicationType"] = "NULL";
+    	else
+    		checkStatusObj = JSON.parse(checkStatusObj);
+    		
+  
+    	
+    	console.log(checkStatusObj);
+      	  	
+    	if (checkStatusObj!="null" && checkStatusObj["type"] == "INTERESTED" )
+    		applyRequestObj["applicationType"] = "NULL";
+    	else
+    		applyRequestObj["applicationType"] = "INTERESTED";
+    	
         applyRequestObj["Resume"] = "";
     
     var url = "/jobs/view/" + jobID + "/apply";
     
     console.log(url);
+    console.log(JSON.stringify(applyRequestObj));
     
-    
-    
-    
-    
-    
+   
     ajaxCall("POST", url, applyRequestObj, function (status, body) {
         if (status == 200) {
             alert("Job successfully mark interested");
+            checkStatus(jobID);
         }
         else if (status == 403)
         {
             alert("Failed to mark the job as interested");
         }
+        
     });
-     }
     
-    else
-    	{
-    	alert("Try again!!!");
-    	}
+        
+    });
+    
+    
+    	
+    
+    
+  
+    
 }
 
 
 function checkStatus(jobReq) {
 	
-	 var checkStatus = "user/"+jobReq+"/getApplicationStatus";
+	alert("In check status function!!!!!");
+	
+	  var checkStatus = "user/"+jobReq+"/getApplicationStatus";
 	  var checkStatusRequestObj = {};
-	    
-	    ajaxCall("GET", checkStatus, checkStatusRequestObj, function (status, body) {
-	        if (status == 200) {
+	
+	  
+	    ajaxCall("GET", checkStatus, checkStatusRequestObj,function (status, body) {
+	       
+	    	if (status == 200) {
 	            
-	        	var checkStatusResponseObj = JSON.parse(body);
+	            
+	        	if(body=="null")
+	        		{
+	        		localStorage.setItem("checkStatusResultObj","null");
+	        			
+	        		}
+	        	else {
+	        	checkStatusResponseObj = JSON.parse(body);
 	        	//document.getElementById("Button").disabled = true;
 	        	if(checkStatusResponseObj["type"] == "APPLIED")
 	        	{
+	        		alert("___________");
 	        		document.getElementById("applybtn").disabled = true;
-	        		document.getElementById('applybtn').innerHTML = "Applied"
+	        		document.getElementById('applybtn').value = "Already Applied"
 	        		document.getElementById("markinterestedbtn").disabled = true;
-	        		document.getElementById('applybtn').innerHTML = "Interested"
-	        		
+	        		document.getElementById('markinterestedbtn').value = "Interested"
+	        			alert("*********");
 	        	}
 	        	else if (checkStatusResponseObj["type"] == "INTERESTED")
 	        	{
-	        		document.getElementById('applybtn').innerHTML = "Interested"
+	        		document.getElementById('applybtn').value = "Apply"
 	        		document.getElementById("applybtn").disabled = false;
+	        		document.getElementById('markinterestedbtn').value = "Mark Not Interested"
+	            	document.getElementById("markinterestedbtn").disabled = false;
 	        	}
-	        	else if(checkStatusResponseObj["type"] == "null")
+	        	else if(checkStatusResponseObj["type"] == "NULL")
 	        	{
-	        		
+	        		document.getElementById('applybtn').value = "Apply"
+	        			document.getElementById('markinterestedbtn').value = "Mark Interested"
 	            		document.getElementById("markinterestedbtn").disabled = false;
 	            		document.getElementById("applybtn").disabled = false;
 	            	
 	        	}
 	        	
+	        	console.log(checkStatusResponseObj);
+		    	localStorage.setItem("checkStatusResultObj",JSON.stringify(checkStatusResponseObj));
+	    	}
+	        	
 	            
 	        }
-	        else if (status == 403)
+/*	        else if (status == 403)
 	        {
 	            alert("Unable to get the status!!");
-	            return false;
+	            
 	        }
+	    	*/
+	    	
+	    	
 	    });
 	    
-	    return true;
+
+	    
+}
+
+function acceptOffer(jobReq)
+{
+	
+	alert("In accept offer function!!!!!");
+	
+	  var url = "user/processApplication/";
+	  var offerStatusObj = {};
+	  
+
+	  offerStatusObj["jobid"] = jobReq;
+	  offerStatusObj["status"] ="OFFER_ACCEPTED";
+		
+
+	
+	  
+	    ajaxCall("POST", url, offerStatusObj , function (status, body) {
+	       
+	    	if (status == 200) {
+	    			alert("Offer accepted!!!");
+	    		}
+	    }
+}
+
+function rejectOffer(jobReq)
+{
+	alert("In reject offer function!!!!!");
+	
+	  var url = "user/processApplication/";
+	  var offerStatusObj = {};
+	  
+
+	  offerStatusObj["jobid"] = jobReq;
+	  offerStatusObj["status"] ="OFFER_REJECTED";
+		
+
+	
+	  
+	    ajaxCall("POST", url, offerStatusObj , function (status, body) {
+	       
+	    	if (status == 200) {
+	    			alert("Offer rejected!!!");
+	    		}
+	    }
+}
+
+function cancelApplication(jobReq)
+{
+	alert("In cancel application function!!!!!");
+	
+	  var url = "user/processApplication/";
+	  var offerStatusObj = {};
+	  
+
+	  offerStatusObj["jobid"] = jobReq;
+	  offerStatusObj["status"] ="CANCELLED";
+		
+
+	
+	  
+	    ajaxCall("POST", url, offerStatusObj , function (status, body) {
+	       
+	    	if (status == 200) {
+	    			alert("Application cancelled!!!");
+	    		}
+	    }
 }
 
 
