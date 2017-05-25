@@ -397,7 +397,7 @@ function loadjobviewPage()
 
 function apply(e) {
 
-	alert("IN apply function ");
+	console.log("IN apply function ");
     e.preventDefault();
     var jobID;
 
@@ -416,14 +416,14 @@ function apply(e) {
 
         if (status == 200) {
 
-          alert("Job successfully applied");
+        	console.log("Job successfully applied");
 
         }
 
         else if (status == 403)
         {
 
-            alert("Job application failed");
+        	console.log("Job application failed");
         }
     });
 }
@@ -437,14 +437,14 @@ function interested(e) {
     jobID = localStorage.getItem("jobId");
     var checkStatusObj = {};
     
-    alert("Checking the status now!!!!!");
+    console.log("Checking the status now!!!!!");
     
     var p = checkStatus(jobID);
     
     var applyRequestObj = {};
     $.when(p).done(	function() {
     	
-    		alert("Succesfully Checked the status now!!!!!");
+    	console.log("Succesfully Checked the status now!!!!!");
     	
 
     		
@@ -474,7 +474,11 @@ function interested(e) {
    
     ajaxCall("POST", url, applyRequestObj, function (status, body) {
         if (status == 200) {
-            alert("Job successfully mark interested");
+
+        	if(applyRequestObj["applicationType"] = "INTERESTED")
+        		console.log("Job successfully marked interested");
+        	else if(applyRequestObj["applicationType"] = "NULL")
+        		console.log("Job successfully marked not interested");
             checkStatus(jobID);
         }
         else if (status == 403)
@@ -487,18 +491,14 @@ function interested(e) {
         
     });
     
-    
-    	
-    
-    
-  
+
     
 }
 
 
 function checkStatus(jobReq) {
 	
-	alert("In check status function!!!!!");
+	console.log("In check status function!!!!!");
 	
 	  var checkStatus = "user/"+jobReq+"/getApplicationStatus";
 	  var checkStatusRequestObj = {};
@@ -519,23 +519,25 @@ function checkStatus(jobReq) {
 	        	//document.getElementById("Button").disabled = true;
 	        	if(checkStatusResponseObj["type"] == "APPLIED")
 	        	{
-	        		alert("___________");
+	        		
 	        		document.getElementById("applybtn").disabled = true;
 	        		document.getElementById('applybtn').value = "Already Applied"
 	        		document.getElementById("markinterestedbtn").disabled = true;
 	        		document.getElementById('markinterestedbtn').value = "Interested"
-	        			alert("*********");
+	        		
 	        	}
 	        	else if (checkStatusResponseObj["type"] == "INTERESTED")
+	        	
 	        	{
 	        		document.getElementById('applybtn').value = "Apply"
 	        		document.getElementById("applybtn").disabled = false;
 	        		document.getElementById('markinterestedbtn').value = "Mark Not Interested"
 	            	document.getElementById("markinterestedbtn").disabled = false;
 	        	}
+	        	
 	        	else if(checkStatusResponseObj["type"] == "NULL")
 	        	{
-	        		document.getElementById('applybtn').value = "Apply"
+	        			document.getElementById('applybtn').value = "Apply"
 	        			document.getElementById('markinterestedbtn').value = "Mark Interested"
 	            		document.getElementById("markinterestedbtn").disabled = false;
 	            		document.getElementById("applybtn").disabled = false;
@@ -547,14 +549,7 @@ function checkStatus(jobReq) {
 	    	}
 	        	
 	            
-	        }
-/*	        else if (status == 403)
-	        {
-	            alert("Unable to get the status!!");
-	            
-	        }
-	    	*/
-	    	
+	        }	    	
 	    	
 	    });
 	    
