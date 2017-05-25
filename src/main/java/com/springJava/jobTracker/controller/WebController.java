@@ -1,6 +1,11 @@
 package com.springJava.jobTracker.controller;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -26,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -49,6 +55,8 @@ import com.springJava.jobTracker.repo.UserRepo;
 @Transactional(propagation = Propagation.REQUIRES_NEW)
 public class WebController {
 	private static final int NO_OF_RESULTS_PER_PAGE = 5;
+
+	private static final String RESUME_DIR = System.getProperty("user.dir");
 
 	Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
@@ -167,7 +175,7 @@ public class WebController {
 					company.setStatus(true);
 					msg = "User with id " + company.getEmailid() + " is verified successfully";
 					try {
-						sendEmail("anubha.mandal@sjsu.edu",
+						sendEmail(emailid,
 								"Dear Employer,\n\nYour account has been verified successfully.\n\nThanks,\nJob-board",
 								"Welcome to Job-Board");
 						return new ResponseEntity<String>("Email sent successfully", HttpStatus.OK);
@@ -248,13 +256,10 @@ public class WebController {
 	// ------------------- Job seeker profile create/ update
 	// ------------------------
 	@RequestMapping(value = "/userprofile/create", method = { RequestMethod.POST }) // need
-																					// to
-																					// change
-																					// the
-																					// entry
-																					// point
-
-	public ResponseEntity<?> createUserProfile(HttpServletRequest request, HttpEntity<String> httpEntity)
+//	@ResponseBody
+	public ResponseEntity<?> createUserProfile(HttpServletRequest request, HttpEntity<String> httpEntity
+//			,@RequestParam("file") MultipartFile resume
+			)
 			throws UnsupportedEncodingException {
 
 		System.out.println("in job profile user");
@@ -285,15 +290,33 @@ public class WebController {
 
 		if (user == null) {
 			return new ResponseEntity<ControllerError>(
-					new ControllerError(HttpStatus.NOT_FOUND.value(), "User with id " + user.getUserid() + "not found"),
+					new ControllerError(HttpStatus.NOT_FOUND.value(), "User with emailid " + emailid + " not found"),
 					HttpStatus.NOT_FOUND);
 		}
-
-		if (user == null) {
-			return new ResponseEntity<ControllerError>(
-					new ControllerError(HttpStatus.NOT_FOUND.value(), "User not found"), HttpStatus.NOT_FOUND);
-
-		}
+		
+		//save resume
+//		if(resume == null || resume.isEmpty()){
+//			return new ResponseEntity<ControllerError>(
+//					new ControllerError(HttpStatus.BAD_REQUEST.value(), "Please upload resume"),
+//					HttpStatus.BAD_REQUEST); 
+//		}
+//		String userdirPath = RESUME_DIR + "/" + String.valueOf(user.getUserid());
+//		File userDir = new File(userdirPath);
+//		if(!userDir.exists()){
+//			userDir.mkdirs();
+//		}
+//		String resumePath = userdirPath +"/"+resume.getOriginalFilename();
+//		
+//		try{
+//			saveFile(resume, resumePath);
+//		}catch(IOException e){
+//			return new ResponseEntity<ControllerError>(
+//					new ControllerError(HttpStatus.BAD_REQUEST.value(), "Unable to save resume."),
+//					HttpStatus.BAD_REQUEST); 
+//		}
+		
+		
+		
 
 		Profile profile = profileRepo.findOne(user.getUserid());
 		if (profile == null) {
@@ -312,6 +335,18 @@ public class WebController {
 															// notification as
 															// well.
 	}
+
+	/**
+	 * save resume to disk
+	 * @param file
+	 * @param resumePath 
+	 * @throws IOException 
+	 */
+//	private void saveFile(MultipartFile file, String resumePath) throws IOException {
+//        byte[] bytes = file.getBytes();
+//        Path path = Paths.get(resumePath);
+//        Files.write(path, bytes);
+//	}
 
 	// ------------------ Post a job -------------------------
 	@RequestMapping(value = "/jobs/post", method = { RequestMethod.POST })
@@ -400,8 +435,8 @@ public class WebController {
 	@RequestMapping(value = "/jobs/updateStatus", method = { RequestMethod.PUT })
 	public ResponseEntity<?> updateJobStatus(HttpServletRequest request, HttpEntity<String> httpEntity)
 			throws UnsupportedEncodingException {
-		//TODO: check loggedIn
-		
+		// TODO: check loggedIn
+
 		request.setCharacterEncoding("UTF-8");
 		String body = httpEntity.getBody();
 
@@ -433,32 +468,37 @@ public class WebController {
 						"Job cannot be cancelled, one or more offers accepted."), HttpStatus.FORBIDDEN);
 			} else {
 				boolean areEmailsSent = true;
-				ApplicationStatus[] nonTerminalStatesArr = {ApplicationStatus.PENDING, ApplicationStatus.OFFERED};
-				List<ApplicationStatus> nonTerminalStates = new ArrayList<ApplicationStatus>(Arrays.asList(nonTerminalStatesArr));
+				ApplicationStatus[] nonTerminalStatesArr = { ApplicationStatus.PENDING, ApplicationStatus.OFFERED };
+				List<ApplicationStatus> nonTerminalStates = new ArrayList<ApplicationStatus>(
+						Arrays.asList(nonTerminalStatesArr));
 				List<Application> sadApplications = appRepo.findByJobAndStatusIn(job, nonTerminalStates);
-				
-				//List<String> sadEmails = appRepo.getEmailsByJobid(job.getJobid());
-//				for (String sadEmail : sadEmails) {
+
+				// List<String> sadEmails =
+				// appRepo.getEmailsByJobid(job.getJobid());
+				// for (String sadEmail : sadEmails) {
 				for (Application sadApplication : sadApplications) {
 					String sadEmail = sadApplication.getUser().getEmailid();
 					String sadMsg = "Your profile was very impressive, however we had to cancel"
-							+ " this opening sue to some unforseeable circumstances. We have kept your resme on file in case a more approprite opportunity comes up."
+							+ " this opening due to some unforseeable circumstances. We have kept your resme on file in case a more approprite opportunity comes up."
 							+ " Please have a look at other jobs at our company. We apologize for the inconvenience";
 					String sadSubject = job.getJobtitle() + " position cancelled";
 					try {
 						sendEmail(sadEmail, sadMsg, sadSubject);
 					} catch (Exception e) {
-						System.out.println("Email to "+sadEmail+" not sent");
+						System.out.println("Email to " + sadEmail + " not sent");
 						e.printStackTrace();
 						areEmailsSent = false;
 					}
 				}
 				Long deletedAppsCount = appRepo.removeByJob(job);
-				if(areEmailsSent){
-					return new ResponseEntity<String>("Job cancelled, "+String.valueOf(deletedAppsCount)+" related applications deleted and applicants notified"
-							+ " via email. ", HttpStatus.OK);
-				}else{
-					return new ResponseEntity<String>("Job cancelled, "+String.valueOf(deletedAppsCount)+" related applications deleted. Emails not sent", HttpStatus.OK);
+				if (areEmailsSent) {
+					return new ResponseEntity<String>(
+							"Job cancelled, " + String.valueOf(deletedAppsCount)
+									+ " related applications deleted and applicants notified" + " via email. ",
+							HttpStatus.OK);
+				} else {
+					return new ResponseEntity<String>("Job cancelled, " + String.valueOf(deletedAppsCount)
+							+ " related applications deleted. Emails not sent", HttpStatus.OK);
 				}
 			}
 
@@ -570,23 +610,44 @@ public class WebController {
 	}
 
 	// ----------- Job search by job seeker -----------------
-	@RequestMapping(value = "/jobs/search/{searchTerm}/{companyName}/{location}/{salaryRange}", method = {
+	@RequestMapping(value = "/jobs/search/{searchTerm}/{companyName}/{location}/{salary}", method = {
 			RequestMethod.GET })
 	public ResponseEntity<?> searchJobUser(HttpServletRequest request, @PathVariable("searchTerm") String freeText,
 			@PathVariable("companyName") String companyname, @PathVariable("location") String location,
-			@PathVariable("salaryRange") String salary1, @RequestParam(required=false, value="number") String resultOffset ) throws UnsupportedEncodingException {
-
-		int salary = Integer.parseInt(salary1);
+			@PathVariable("salary") String salary1,
+			@RequestParam(required = false, value = "number") String resultOffset) throws UnsupportedEncodingException {
+		
+		int[] salIn = new int[2];
+		String[] inputSal = salary1.split("-");
+		if(inputSal.length == 0){
+			salIn[0] = 0;
+			salIn[1] = 0;
+		}
+		else if(inputSal.length == 1){
+			salIn[0] = Integer.parseInt(inputSal[0]);
+			salIn[1] = 0;
+		}
+		else if(inputSal.length == 2){
+			salIn[0] = Integer.parseInt(inputSal[0]);
+			salIn[1] = Integer.parseInt(inputSal[1]);
+		}
+		System.out.println("i:" + salIn[0] + "-j:" + salIn[1]);
+		int salmin = salIn[0];
+		int salmax = salIn[1];
+		
 		List<Job> freeList = new ArrayList<Job>();
 		List<Job> compList = new ArrayList<Job>();
 		List<Job> locList = new ArrayList<Job>();
-		List<Job> salList = new ArrayList<Job>();
+		List<Job> salMinList = new ArrayList<Job>();
+		List<Job> salMaxList = new ArrayList<Job>();
+		
 		List<Job> res_list = new ArrayList<Job>(); // Final output list
 
 		boolean freeFlag = false;
 		boolean compFlag = false;
 		boolean locFlag = false;
-		boolean salFlag = false;
+		boolean salMinFlag = false;
+		boolean salMaxFlag = false;
 
 		if (!freeText.equals("null")) {
 			freeList = getFreeTextJobs(freeText);
@@ -607,61 +668,70 @@ public class WebController {
 				res_list = locList;
 			}
 		}
-		if (salary != 0) {
-			salList = getSalaryJobs(salary);
-			salFlag = true;
-			if (salList.size() > res_list.size()) {
-				res_list = salList;
+		if (salmin != 0) {
+			salMinList = getMinSalaryJobs(salmin);
+			salMinFlag = true;
+			if (salMinList.size() > res_list.size()) {
+				res_list = salMinList;
 			}
 		}
+		if (salmax != 0) {
+			salMaxList = getMaxSalaryJobs(salmax);
+			salMaxFlag = true;
+			if (salMaxList.size() > res_list.size()) {
+				res_list = salMaxList;
+			}
+		}
+		
 		if (freeFlag)
 			res_list = my_intersect(res_list, freeList);
 		if (compFlag)
 			res_list = my_intersect(res_list, compList);
 		if (locFlag)
 			res_list = my_intersect(res_list, locList);
-		if (salFlag)
-			res_list = my_intersect(res_list, salList);
+		if (salMinFlag)
+			res_list = my_intersect(res_list, salMinList);
+		if (salMaxFlag)
+			res_list = my_intersect(res_list, salMaxList);
 
 		if (res_list.isEmpty()) {
 			return new ResponseEntity<ControllerError>(
 					new ControllerError(HttpStatus.NOT_FOUND.value(), "No job match."), HttpStatus.NOT_FOUND);
 		}
-		
-		
-		//pagination hack
-		if(resultOffset != null){
-			int start = Integer.parseInt(resultOffset)-1;
+
+		// pagination hack
+		if (resultOffset != null) {
+			int start = Integer.parseInt(resultOffset) - 1;
 			int end = start + NO_OF_RESULTS_PER_PAGE;
 			end -= end % NO_OF_RESULTS_PER_PAGE;
 			int size = res_list.size();
-			
+
 			List<Job> paginatedResults = null;
-			if(start == end){
+			if (start == end) {
 				paginatedResults = new ArrayList<>();
 			}
-			
-			if(start >= 0 && start < size){
-//				end -= end % (size+1);
-				if(end > size){
+
+			if (start >= 0 && start < size) {
+				// end -= end % (size+1);
+				if (end > size) {
 					end = size;
 				}
 				paginatedResults = res_list.subList(start, end);
-			}else{
+			} else {
 				paginatedResults = new ArrayList<>();
 			}
 			ResponseEntity<List<Job>> response = new ResponseEntity<List<Job>>(paginatedResults, HttpStatus.OK);
 			return response;
-			
+
 		}
-		
-		
+
 		ResponseEntity<List<Job>> response = new ResponseEntity<List<Job>>(res_list, HttpStatus.OK);
 		return response;
 	}
 
+	// Method to search by free text
 	public List<Job> getFreeTextJobs(String freeText) {
-		List<String> inputList = Arrays.asList(freeText.split(","));
+		List<String> inputList = Arrays.asList(freeText.split("\\s*,\\s*"));
 		List<Job> res = new ArrayList<Job>(); // final output list
 		// Search in job title
 		for (String l : inputList) {
@@ -701,8 +771,9 @@ public class WebController {
 		return res;
 	}
 
+	// Method to search by Company name
 	public List<Job> getCompanyNameJobs(String companyname) {
-		List<String> inputList = Arrays.asList(companyname.split(","));
+		List<String> inputList = Arrays.asList(companyname.split("\\s*,\\s*"));
 		List<Job> res = new ArrayList<Job>(); // final output list
 		// Search in company Name
 		for (String l : inputList) {
@@ -713,8 +784,9 @@ public class WebController {
 		return res;
 	}
 
+	// Method to search by Location
 	public List<Job> getLocationJobs(String location) {
-		List<String> inputList = Arrays.asList(location.split(","));
+		List<String> inputList = Arrays.asList(location.split("\\s*,\\s*"));
 		List<Job> res = new ArrayList<Job>(); // final output list
 		// Search in Locations
 		for (String l : inputList) {
@@ -724,12 +796,21 @@ public class WebController {
 		return res;
 	}
 
-	public List<Job> getSalaryJobs(int salary) {
+	// Method to search by min salary
+	public List<Job> getMinSalaryJobs(int salary) {
 		// Search in salary
-		List<Job> res = new ArrayList<>(jobRepo.findByStatusAndSalaryGreaterThan(JobStatus.OPEN, salary));
+		List<Job> res = new ArrayList<>(jobRepo.findByStatusAndSalaryGreaterThan(JobStatus.OPEN, salary - 1));
+		return res;
+	}
+	
+	// Method to search by max salary
+	public List<Job> getMaxSalaryJobs(int salary) {
+		// Search in salary
+		List<Job> res = new ArrayList<>(jobRepo.findByStatusAndSalaryLessThan(JobStatus.OPEN, salary + 1));
 		return res;
 	}
 
+	// Method for sending an email
 	public void sendEmail(String recepient, String msg, String subject) throws Exception {
 		MimeMessage message = sender.createMimeMessage();
 		MimeMessageHelper helper = new MimeMessageHelper(message);
