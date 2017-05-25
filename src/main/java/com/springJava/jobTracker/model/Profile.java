@@ -43,6 +43,8 @@ public class Profile {
 	
 	private String phone;
 	
+//	private String resumePath;
+	
 	//public Profile(Long userid, String firstname, String lastname, String imageloc, String intro, String workex,
 	//		String education, List<String> skills, String phone) {
 	public Profile(Long userid, String firstname, String lastname, String imageloc, String intro, String workex,
@@ -57,6 +59,7 @@ public class Profile {
 		this.education = education;
 		this.skills = skills;
 		this.phone = phone;
+//		this.resumePath = resumePath;
 	}
 
 	public Profile() {
@@ -133,6 +136,14 @@ public class Profile {
 	public void setPhone(String phone) {
 		this.phone = phone;
 	}
+//
+//	public String getResumePath() {
+//		return resumePath;
+//	}
+//
+//	public void setResumePath(String resumePath) {
+//		this.resumePath = resumePath;
+//	}
 
 	
 }

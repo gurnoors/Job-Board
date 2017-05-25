@@ -1,6 +1,11 @@
 package com.springJava.jobTracker.controller;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -26,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -49,6 +55,8 @@ import com.springJava.jobTracker.repo.UserRepo;
 @Transactional(propagation = Propagation.REQUIRES_NEW)
 public class WebController {
 	private static final int NO_OF_RESULTS_PER_PAGE = 5;
+
+	private static final String RESUME_DIR = System.getProperty("user.dir");
 
 	Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
@@ -248,13 +256,10 @@ public class WebController {
 	// ------------------- Job seeker profile create/ update
 	// ------------------------
 	@RequestMapping(value = "/userprofile/create", method = { RequestMethod.POST }) // need
-																					// to
-																					// change
-																					// the
-																					// entry
-																					// point
-
-	public ResponseEntity<?> createUserProfile(HttpServletRequest request, HttpEntity<String> httpEntity)
+//	@ResponseBody
+	public ResponseEntity<?> createUserProfile(HttpServletRequest request, HttpEntity<String> httpEntity
+//			,@RequestParam("file") MultipartFile resume
+			)
 			throws UnsupportedEncodingException {
 
 		System.out.println("in job profile user");
@@ -285,16 +290,33 @@ public class WebController {
 
 		if (user == null) {
 			return new ResponseEntity<ControllerError>(
-					new ControllerError(HttpStatus.NOT_FOUND.value(), "User with id " + user.getUserid() + "not found"),
+					new ControllerError(HttpStatus.NOT_FOUND.value(), "User with emailid " + emailid + " not found"),
 					HttpStatus.NOT_FOUND);
 		}
-
-		if (user == null) {
-			return new ResponseEntity<ControllerError>(
-					new ControllerError(HttpStatus.NOT_FOUND.value(), "User not found"), HttpStatus.NOT_FOUND);
-
-		}
-
+		
+		//save resume
+//		if(resume == null || resume.isEmpty()){
+//			return new ResponseEntity<ControllerError>(
+//					new ControllerError(HttpStatus.BAD_REQUEST.value(), "Please upload resume"),
+//					HttpStatus.BAD_REQUEST); 
+//		}
+//		String userdirPath = RESUME_DIR + "/" + String.valueOf(user.getUserid());
+//		File userDir = new File(userdirPath);
+//		if(!userDir.exists()){
+//			userDir.mkdirs();
+//		}
+//		String resumePath = userdirPath +"/"+resume.getOriginalFilename();
+//		
+//		try{
+//			saveFile(resume, resumePath);
+//		}catch(IOException e){
+//			return new ResponseEntity<ControllerError>(
+//					new ControllerError(HttpStatus.BAD_REQUEST.value(), "Unable to save resume."),
+//					HttpStatus.BAD_REQUEST); 
+//		}
+		
+		
+		
 		Profile profile = profileRepo.findOne(user.getUserid());
 		if (profile == null) {
 			// List<String> skillList = Arrays.asList(skills.split("\\,"));
@@ -312,6 +334,18 @@ public class WebController {
 															// notification as
 															// well.
 	}
+
+	/**
+	 * save resume to disk
+	 * @param file
+	 * @param resumePath 
+	 * @throws IOException 
+	 */
+//	private void saveFile(MultipartFile file, String resumePath) throws IOException {
+//        byte[] bytes = file.getBytes();
+//        Path path = Paths.get(resumePath);
+//        Files.write(path, bytes);
+//	}
 
 	// ------------------ Post a job -------------------------
 	@RequestMapping(value = "/jobs/post", method = { RequestMethod.POST })
@@ -400,8 +434,8 @@ public class WebController {
 	@RequestMapping(value = "/jobs/updateStatus", method = { RequestMethod.PUT })
 	public ResponseEntity<?> updateJobStatus(HttpServletRequest request, HttpEntity<String> httpEntity)
 			throws UnsupportedEncodingException {
-		//TODO: check loggedIn
-		
+		// TODO: check loggedIn
+
 		request.setCharacterEncoding("UTF-8");
 		String body = httpEntity.getBody();
 
@@ -433,12 +467,14 @@ public class WebController {
 						"Job cannot be cancelled, one or more offers accepted."), HttpStatus.FORBIDDEN);
 			} else {
 				boolean areEmailsSent = true;
-				ApplicationStatus[] nonTerminalStatesArr = {ApplicationStatus.PENDING, ApplicationStatus.OFFERED};
-				List<ApplicationStatus> nonTerminalStates = new ArrayList<ApplicationStatus>(Arrays.asList(nonTerminalStatesArr));
+				ApplicationStatus[] nonTerminalStatesArr = { ApplicationStatus.PENDING, ApplicationStatus.OFFERED };
+				List<ApplicationStatus> nonTerminalStates = new ArrayList<ApplicationStatus>(
+						Arrays.asList(nonTerminalStatesArr));
 				List<Application> sadApplications = appRepo.findByJobAndStatusIn(job, nonTerminalStates);
-				
-				//List<String> sadEmails = appRepo.getEmailsByJobid(job.getJobid());
-//				for (String sadEmail : sadEmails) {
+
+				// List<String> sadEmails =
+				// appRepo.getEmailsByJobid(job.getJobid());
+				// for (String sadEmail : sadEmails) {
 				for (Application sadApplication : sadApplications) {
 					String sadEmail = sadApplication.getUser().getEmailid();
 					String sadMsg = "Your profile was very impressive, however we had to cancel"
@@ -448,17 +484,20 @@ public class WebController {
 					try {
 						sendEmail(sadEmail, sadMsg, sadSubject);
 					} catch (Exception e) {
-						System.out.println("Email to "+sadEmail+" not sent");
+						System.out.println("Email to " + sadEmail + " not sent");
 						e.printStackTrace();
 						areEmailsSent = false;
 					}
 				}
 				Long deletedAppsCount = appRepo.removeByJob(job);
-				if(areEmailsSent){
-					return new ResponseEntity<String>("Job cancelled, "+String.valueOf(deletedAppsCount)+" related applications deleted and applicants notified"
-							+ " via email. ", HttpStatus.OK);
-				}else{
-					return new ResponseEntity<String>("Job cancelled, "+String.valueOf(deletedAppsCount)+" related applications deleted. Emails not sent", HttpStatus.OK);
+				if (areEmailsSent) {
+					return new ResponseEntity<String>(
+							"Job cancelled, " + String.valueOf(deletedAppsCount)
+									+ " related applications deleted and applicants notified" + " via email. ",
+							HttpStatus.OK);
+				} else {
+					return new ResponseEntity<String>("Job cancelled, " + String.valueOf(deletedAppsCount)
+							+ " related applications deleted. Emails not sent", HttpStatus.OK);
 				}
 			}
 
@@ -574,7 +613,8 @@ public class WebController {
 			RequestMethod.GET })
 	public ResponseEntity<?> searchJobUser(HttpServletRequest request, @PathVariable("searchTerm") String freeText,
 			@PathVariable("companyName") String companyname, @PathVariable("location") String location,
-			@PathVariable("salaryRange") String salary1, @RequestParam(required=false, value="number") String resultOffset ) throws UnsupportedEncodingException {
+			@PathVariable("salaryRange") String salary1,
+			@RequestParam(required = false, value = "number") String resultOffset) throws UnsupportedEncodingException {
 
 		int salary = Integer.parseInt(salary1);
 		List<Job> freeList = new ArrayList<Job>();
@@ -627,35 +667,33 @@ public class WebController {
 			return new ResponseEntity<ControllerError>(
 					new ControllerError(HttpStatus.NOT_FOUND.value(), "No job match."), HttpStatus.NOT_FOUND);
 		}
-		
-		
-		//pagination hack
-		if(resultOffset != null){
-			int start = Integer.parseInt(resultOffset)-1;
+
+		// pagination hack
+		if (resultOffset != null) {
+			int start = Integer.parseInt(resultOffset) - 1;
 			int end = start + NO_OF_RESULTS_PER_PAGE;
 			end -= end % NO_OF_RESULTS_PER_PAGE;
 			int size = res_list.size();
-			
+
 			List<Job> paginatedResults = null;
-			if(start == end){
+			if (start == end) {
 				paginatedResults = new ArrayList<>();
 			}
-			
-			if(start >= 0 && start < size){
-//				end -= end % (size+1);
-				if(end > size){
+
+			if (start >= 0 && start < size) {
+				// end -= end % (size+1);
+				if (end > size) {
 					end = size;
 				}
 				paginatedResults = res_list.subList(start, end);
-			}else{
+			} else {
 				paginatedResults = new ArrayList<>();
 			}
 			ResponseEntity<List<Job>> response = new ResponseEntity<List<Job>>(paginatedResults, HttpStatus.OK);
 			return response;
-			
+
 		}
-		
-		
+
 		ResponseEntity<List<Job>> response = new ResponseEntity<List<Job>>(res_list, HttpStatus.OK);
 		return response;
 	}
