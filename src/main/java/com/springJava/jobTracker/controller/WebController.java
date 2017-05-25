@@ -266,7 +266,7 @@ public class WebController {
 		JsonObject jobj = jelem.getAsJsonObject();
 		String firstname = jobj.get("First Name").getAsString();
 		String lastname = jobj.get("Last Name").getAsString();
-		String picture = "abcd.jpg";
+		String picture = jobj.get("LogoImgSrc").getAsString();
 		String intro = jobj.get("Self-introduction").getAsString();
 		String workex = jobj.get("Work Experience").getAsString();
 		String education = jobj.get("Education").getAsString();
