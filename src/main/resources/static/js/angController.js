@@ -455,7 +455,41 @@ app.controller('editJobSuccessCtrl', function($scope, $http, $window) {
 
 app.controller('editEmployerProfileCtrl', function($scope, $http, $window) {
 	
-	$scope.company = {};
+	$scope.gotoDashboard = function (){ 
+		$window.location.href = "/EmployerDashboard.html";
+	}
+	$http({
+        url: '/employer',
+        method: 'GET',
+        transformResponse: function (data, headersGetter, status) 
+        					{ 
+        						if(status=='404')
+        						{	
+        							console.log("error");
+        							return data;
+        						}
+        						else if(status=='200')
+        						{
+        							console.log(data);
+        							return JSON.parse(data);
+        						}
+        						else{
+        							data= JSON.parse(data);
+        							return data;
+        						}; 
+        					
+        					}
+    }).then(function successCallback(data) 
+    		{ 
+    		$scope.company = data.data;
+    		console.log($scope.company);
+    		}, 
+    		function err(data) 
+    		{
+    		 console.log("error");
+    		 console.log(data);
+    		});
+	
 	$scope.submitCompanyData = function (){ 
 		
 		$http({
@@ -481,9 +515,9 @@ app.controller('editEmployerProfileCtrl', function($scope, $http, $window) {
         					},
 		data: {	'Company Name': $scope.company.name,
 		    	Description: $scope.company.description, 
-		    	Website: $scope.company.Website,
-		    	Address_Headquarters: $scope.company.Address_Headquarters,
-		    	Logo_Image_URL: $scope.company.Logo_Image_URL
+		    	Website: $scope.company.website,
+		    	Address_Headquarters: $scope.company.address,
+		    	Logo_Image_URL: $scope.company.logo_image
         }
     }).then(function successCallback(data) 
     		{ 

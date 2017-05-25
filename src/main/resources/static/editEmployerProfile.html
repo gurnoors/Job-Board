@@ -23,27 +23,29 @@
 <body ng-app="myApp" ng-controller="editEmployerProfileCtrl">
 
 <div class="container">
-    <h1>Edit Profile</h1>
+    <h1>View/Edit Your Profile</h1>
     <hr>
-    <div class="main-login main-center" >
-          <form ng-submit="submitCompanyData()" name="postCompanyForm">
+    <img ng-src="{{company.logo_image}}" alt="Mountain View" style="width:100px;height:100px;">
+    <br></br>
+    <div>
+          <form name="postCompanyForm">
           		<label for="companyname" class="cols-sm-2 control-label">Company Name</label>
-				<input type="text" class="form-control" name="companyname" ng-model="company.name"  placeholder="Enter desc"/>
+				<input type="text" class="form-control" ng-model="company.name" />
 				<br></br>
 				<label for="desc" class="cols-sm-2 control-label">Description</label>
 				<input type="text" class="form-control" name="desc" ng-model="company.description"  placeholder="Enter desc"/>
 				<br></br>
 				<label for="Website" class="cols-sm-2 control-label">Website</label>
-				<input type="text" class="form-control" name="Website" ng-model="company.Website"  placeholder="Enter website url"/>
+				<input type="text" class="form-control" name="Website" ng-model="company.website"  placeholder="Enter website url"/>
 				<br></br>
 				<label for="Address_Headquarters" class="cols-sm-2 control-label">Address_Headquarters</label>
-				<input type="text" class="form-control" name="Address_Headquarters" ng-model="company.Address_Headquarters" placeholder="Enter address"/>
+				<input type="text" class="form-control" name="Address_Headquarters" ng-model="company.address" placeholder="Enter address"/>
 				<br></br>
 				<label for="Logo_Image_URL" class="cols-sm-2 control-label">Logo_Image_URL</label>
-				<input type="text" class="form-control" name="Logo_Image_URL" ng-model="company.Logo_Image_URL"  placeholder="Enter logo image url"/>
+				<input type="text" class="form-control" name="Logo_Image_URL" ng-model="company.logo_image"  placeholder="Enter logo image url"/>
 				<br></br>
-				<input type="submit" id="submit" class="btn btn-primary btn-lg login-button" value="Update" />
-                <button type="reset" id = "Reset" class="btn btn-primary btn-lg  login-button">Reset</button>
+				<input type="submit" id="submit" class="btn btn-primary btn-lg login-button" value="Update" ng-click="submitCompanyData()"/>
+				<input type="submit" id="submit" class="btn btn-primary btn-lg login-button" value="Cancel" ng-click="gotoDashboard()"/>
             </form>  
 
     </div>

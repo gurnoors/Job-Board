@@ -666,6 +666,13 @@ var searchRequestObj = {};
         if (input.getAttribute("name") === "skills") {
             searchRequestObj["Skills"] = input.value;
         }
+        
+        if (input.getAttribute("name") === "resume") {
+            searchRequestObj["Resume"] = input.value;
+        }
+        
+        var logoImgSrc = document.getElementById("uploaded").src;
+        searchRequestObj["LogoImgSrc"] = logoImgSrc;
 
     }
 
