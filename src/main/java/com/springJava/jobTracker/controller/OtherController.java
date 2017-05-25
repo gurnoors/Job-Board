@@ -308,6 +308,7 @@ public class OtherController {
 					new ControllerError(HttpStatus.NOT_FOUND.value(), "Company with emailid " + email + " Not found"),
 					HttpStatus.NOT_FOUND);
 		}
+		
 
 		// read body
 		String body = httpEntity.getBody();

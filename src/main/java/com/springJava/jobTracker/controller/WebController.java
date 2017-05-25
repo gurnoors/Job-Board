@@ -289,12 +289,6 @@ public class WebController {
 					HttpStatus.NOT_FOUND);
 		}
 
-		if (user == null) {
-			return new ResponseEntity<ControllerError>(
-					new ControllerError(HttpStatus.NOT_FOUND.value(), "User not found"), HttpStatus.NOT_FOUND);
-
-		}
-
 		Profile profile = profileRepo.findOne(user.getUserid());
 		if (profile == null) {
 			// List<String> skillList = Arrays.asList(skills.split("\\,"));
