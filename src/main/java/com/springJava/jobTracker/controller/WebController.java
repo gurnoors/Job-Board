@@ -175,7 +175,7 @@ public class WebController {
 					company.setStatus(true);
 					msg = "User with id " + company.getEmailid() + " is verified successfully";
 					try {
-						sendEmail("anubha.mandal@sjsu.edu",
+						sendEmail(emailid,
 								"Dear Employer,\n\nYour account has been verified successfully.\n\nThanks,\nJob-board",
 								"Welcome to Job-Board");
 						return new ResponseEntity<String>("Email sent successfully", HttpStatus.OK);
@@ -479,7 +479,7 @@ public class WebController {
 				for (Application sadApplication : sadApplications) {
 					String sadEmail = sadApplication.getUser().getEmailid();
 					String sadMsg = "Your profile was very impressive, however we had to cancel"
-							+ " this opening sue to some unforseeable circumstances. We have kept your resme on file in case a more approprite opportunity comes up."
+							+ " this opening due to some unforseeable circumstances. We have kept your resme on file in case a more approprite opportunity comes up."
 							+ " Please have a look at other jobs at our company. We apologize for the inconvenience";
 					String sadSubject = job.getJobtitle() + " position cancelled";
 					try {
@@ -610,24 +610,44 @@ public class WebController {
 	}
 
 	// ----------- Job search by job seeker -----------------
-	@RequestMapping(value = "/jobs/search/{searchTerm}/{companyName}/{location}/{salaryRange}", method = {
+	@RequestMapping(value = "/jobs/search/{searchTerm}/{companyName}/{location}/{salary}", method = {
 			RequestMethod.GET })
 	public ResponseEntity<?> searchJobUser(HttpServletRequest request, @PathVariable("searchTerm") String freeText,
 			@PathVariable("companyName") String companyname, @PathVariable("location") String location,
-			@PathVariable("salaryRange") String salary1,
+			@PathVariable("salary") String salary1,
 			@RequestParam(required = false, value = "number") String resultOffset) throws UnsupportedEncodingException {
-
-		int salary = Integer.parseInt(salary1);
+		
+		int[] salIn = new int[2];
+		String[] inputSal = salary1.split("-");
+		if(inputSal.length == 0){
+			salIn[0] = 0;
+			salIn[1] = 0;
+		}
+		else if(inputSal.length == 1){
+			salIn[0] = Integer.parseInt(inputSal[0]);
+			salIn[1] = 0;
+		}
+		else if(inputSal.length == 2){
+			salIn[0] = Integer.parseInt(inputSal[0]);
+			salIn[1] = Integer.parseInt(inputSal[1]);
+		}
+		System.out.println("i:" + salIn[0] + "-j:" + salIn[1]);
+		int salmin = salIn[0];
+		int salmax = salIn[1];
+		
 		List<Job> freeList = new ArrayList<Job>();
 		List<Job> compList = new ArrayList<Job>();
 		List<Job> locList = new ArrayList<Job>();
-		List<Job> salList = new ArrayList<Job>();
+		List<Job> salMinList = new ArrayList<Job>();
+		List<Job> salMaxList = new ArrayList<Job>();
+		
 		List<Job> res_list = new ArrayList<Job>(); // Final output list
 
 		boolean freeFlag = false;
 		boolean compFlag = false;
 		boolean locFlag = false;
-		boolean salFlag = false;
+		boolean salMinFlag = false;
+		boolean salMaxFlag = false;
 
 		if (!freeText.equals("null")) {
 			freeList = getFreeTextJobs(freeText);
@@ -648,21 +668,31 @@ public class WebController {
 				res_list = locList;
 			}
 		}
-		if (salary != 0) {
-			salList = getSalaryJobs(salary);
-			salFlag = true;
-			if (salList.size() > res_list.size()) {
-				res_list = salList;
+		if (salmin != 0) {
+			salMinList = getMinSalaryJobs(salmin);
+			salMinFlag = true;
+			if (salMinList.size() > res_list.size()) {
+				res_list = salMinList;
 			}
 		}
+		if (salmax != 0) {
+			salMaxList = getMaxSalaryJobs(salmax);
+			salMaxFlag = true;
+			if (salMaxList.size() > res_list.size()) {
+				res_list = salMaxList;
+			}
+		}
+		
 		if (freeFlag)
 			res_list = my_intersect(res_list, freeList);
 		if (compFlag)
 			res_list = my_intersect(res_list, compList);
 		if (locFlag)
 			res_list = my_intersect(res_list, locList);
-		if (salFlag)
-			res_list = my_intersect(res_list, salList);
+		if (salMinFlag)
+			res_list = my_intersect(res_list, salMinList);
+		if (salMaxFlag)
+			res_list = my_intersect(res_list, salMaxList);
 
 		if (res_list.isEmpty()) {
 			return new ResponseEntity<ControllerError>(
@@ -699,8 +729,9 @@ public class WebController {
 		return response;
 	}
 
+	// Method to search by free text
 	public List<Job> getFreeTextJobs(String freeText) {
-		List<String> inputList = Arrays.asList(freeText.split(","));
+		List<String> inputList = Arrays.asList(freeText.split("\\s*,\\s*"));
 		List<Job> res = new ArrayList<Job>(); // final output list
 		// Search in job title
 		for (String l : inputList) {
@@ -740,8 +771,9 @@ public class WebController {
 		return res;
 	}
 
+	// Method to search by Company name
 	public List<Job> getCompanyNameJobs(String companyname) {
-		List<String> inputList = Arrays.asList(companyname.split(","));
+		List<String> inputList = Arrays.asList(companyname.split("\\s*,\\s*"));
 		List<Job> res = new ArrayList<Job>(); // final output list
 		// Search in company Name
 		for (String l : inputList) {
@@ -752,8 +784,9 @@ public class WebController {
 		return res;
 	}
 
+	// Method to search by Location
 	public List<Job> getLocationJobs(String location) {
-		List<String> inputList = Arrays.asList(location.split(","));
+		List<String> inputList = Arrays.asList(location.split("\\s*,\\s*"));
 		List<Job> res = new ArrayList<Job>(); // final output list
 		// Search in Locations
 		for (String l : inputList) {
@@ -763,12 +796,21 @@ public class WebController {
 		return res;
 	}
 
-	public List<Job> getSalaryJobs(int salary) {
+	// Method to search by min salary
+	public List<Job> getMinSalaryJobs(int salary) {
 		// Search in salary
-		List<Job> res = new ArrayList<>(jobRepo.findByStatusAndSalaryGreaterThan(JobStatus.OPEN, salary));
+		List<Job> res = new ArrayList<>(jobRepo.findByStatusAndSalaryGreaterThan(JobStatus.OPEN, salary - 1));
+		return res;
+	}
+	
+	// Method to search by max salary
+	public List<Job> getMaxSalaryJobs(int salary) {
+		// Search in salary
+		List<Job> res = new ArrayList<>(jobRepo.findByStatusAndSalaryLessThan(JobStatus.OPEN, salary + 1));
 		return res;
 	}
 
+	// Method for sending an email
 	public void sendEmail(String recepient, String msg, String subject) throws Exception {
 		MimeMessage message = sender.createMimeMessage();
 		MimeMessageHelper helper = new MimeMessageHelper(message);

@@ -71,14 +71,16 @@
                     <label for="SearchBySalary" class="cols-sm-2 control-label">Salary</label>
                     <div class="cols-sm-10">
                         <div class="input-group">
+                        	<p>To search for a salary range , enter lowrange-highrange </br><b>e.g 2500-5000</b></p>
                             <input type="text" class="form-control" name="SearchBySalary" id="SearchBySalary" placeholder="Search By Salary"/>
                         </div>
                     </div>
                 </div>
 
                 <button type="submit" id = "Login" class="btn btn-default btn-primary login-button" style="width: 200px"> Search for Jobs</button>
+                
                 <br>
-                <br>
+                <br><div id = "errorMessage"></div>
                 <div id="searchResultBlock" class="searchResultBlock"></div>
             </form>
 
@@ -90,6 +92,8 @@
 
 
         </div>
+        
+        
 
 </div>
 </body>

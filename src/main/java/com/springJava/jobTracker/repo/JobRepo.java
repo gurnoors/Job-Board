@@ -22,6 +22,7 @@ public interface JobRepo extends CrudRepository<Job, Long>{
 		List<Job> findByStatusAndSalaryGreaterThan(JobStatus status, int salary);
 		List<Job> findByStatusAndCompany(JobStatus status,  Company company);
 		List<Job> findByStatusAndDescriptionContaining(JobStatus status,  String description);
+		List<Job> findByStatusAndSalaryLessThan(JobStatus status, int salary);
 		
 	@Transactional
     @Modifying(clearAutomatically = true)

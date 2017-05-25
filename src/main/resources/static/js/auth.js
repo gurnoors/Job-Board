@@ -255,6 +255,7 @@ function getAllUrlParams(url) {
 
 function login(e) {
 
+	alert("IN login");
     e.preventDefault();
     var loginForm = e.target;
     var inputArray = loginForm.getElementsByTagName("input");
@@ -272,8 +273,10 @@ function login(e) {
         }
 
     }
-
-    ajaxCall("POST", "/login", loginRequestObj, function (status, body) {
+    
+	alert("beofre jaax call");
+	
+	ajaxCall("POST", "/login", loginRequestObj, function (status, body) {
         
     	if (status == 200) {
     		
@@ -306,6 +309,8 @@ function login(e) {
         }
     });
 }
+
+
 
 function logout(e) {
 	
