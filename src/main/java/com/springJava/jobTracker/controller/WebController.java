@@ -258,7 +258,6 @@ public class WebController {
 	@RequestMapping(value = "/userprofile/create", method = { RequestMethod.POST }) // need
 //	@ResponseBody
 	public ResponseEntity<?> createUserProfile(HttpServletRequest request, HttpEntity<String> httpEntity
-//			,@RequestParam("file") MultipartFile resume
 			)
 			throws UnsupportedEncodingException {
 
@@ -294,29 +293,6 @@ public class WebController {
 					HttpStatus.NOT_FOUND);
 		}
 		
-		//save resume
-//		if(resume == null || resume.isEmpty()){
-//			return new ResponseEntity<ControllerError>(
-//					new ControllerError(HttpStatus.BAD_REQUEST.value(), "Please upload resume"),
-//					HttpStatus.BAD_REQUEST); 
-//		}
-//		String userdirPath = RESUME_DIR + "/" + String.valueOf(user.getUserid());
-//		File userDir = new File(userdirPath);
-//		if(!userDir.exists()){
-//			userDir.mkdirs();
-//		}
-//		String resumePath = userdirPath +"/"+resume.getOriginalFilename();
-//		
-//		try{
-//			saveFile(resume, resumePath);
-//		}catch(IOException e){
-//			return new ResponseEntity<ControllerError>(
-//					new ControllerError(HttpStatus.BAD_REQUEST.value(), "Unable to save resume."),
-//					HttpStatus.BAD_REQUEST); 
-//		}
-		
-		
-		
 
 		Profile profile = profileRepo.findOne(user.getUserid());
 		if (profile == null) {
@@ -342,12 +318,6 @@ public class WebController {
 	 * @param resumePath 
 	 * @throws IOException 
 	 */
-//	private void saveFile(MultipartFile file, String resumePath) throws IOException {
-//        byte[] bytes = file.getBytes();
-//        Path path = Paths.get(resumePath);
-//        Files.write(path, bytes);
-//	}
-
 	// ------------------ Post a job -------------------------
 	@RequestMapping(value = "/jobs/post", method = { RequestMethod.POST })
 	public ResponseEntity<?> postJob(HttpServletRequest request, HttpEntity<String> httpEntity)
