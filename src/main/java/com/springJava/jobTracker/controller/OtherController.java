@@ -1,6 +1,11 @@
 package com.springJava.jobTracker.controller;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
@@ -13,8 +18,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.springJava.jobTracker.model.Application;
 import com.springJava.jobTracker.model.ApplicationStatus;
@@ -38,6 +45,7 @@ import com.google.gson.JsonObject;
 
 @RestController
 public class OtherController {
+	private static final String RESUME_DIR = System.getProperty("user.dir");
 	private static Gson gson = new GsonBuilder().setPrettyPrinting().create();
 	private static WebController controller = new WebController();
 
@@ -121,11 +129,14 @@ public class OtherController {
 		}
 
 		ResponseEntity<String> responseEntity = null;
-		if (isUser) {
-			responseEntity = new ResponseEntity<String>("user", responseStatus);
-			;
+		if (!responseStatus.equals(HttpStatus.FORBIDDEN)) {
+			if (isUser) {
+				responseEntity = new ResponseEntity<String>("user", responseStatus);
+			} else {
+				responseEntity = new ResponseEntity<String>("employer", responseStatus);
+			}
 		} else {
-			responseEntity = new ResponseEntity<String>("employer", responseStatus);
+			responseEntity = new ResponseEntity<String>("forbidden", responseStatus);
 		}
 
 		return responseEntity;
@@ -586,7 +597,7 @@ public class OtherController {
 	public ResponseEntity<?> getEmployer(HttpServletRequest request) {
 		// sanity checks
 		System.out.println("isLogged IN --> " + (String) request.getSession().getAttribute("loggedIn"));
-		System.out.println("LoggedIn Email: "+ (String) request.getSession().getAttribute("email"));
+		System.out.println("LoggedIn Email: " + (String) request.getSession().getAttribute("email"));
 		if (request.getSession().getAttribute("loggedIn") == null
 				|| !((String) request.getSession().getAttribute("loggedIn")).equals("employer")) {
 			return new ResponseEntity<ControllerError>(
@@ -595,10 +606,116 @@ public class OtherController {
 		String emailid = (String) request.getSession().getAttribute("email");
 		Company company = compRepo.findByEmailid(emailid);
 		if (company == null) {
-			return new ResponseEntity<ControllerError>(
-					new ControllerError(HttpStatus.NOT_FOUND.value(), "Employer with email id " + emailid + " not found"),
-					HttpStatus.NOT_FOUND);
+			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
+					"Employer with email id " + emailid + " not found"), HttpStatus.NOT_FOUND);
 		}
 		return new ResponseEntity<Company>(company, HttpStatus.OK);
 	}
+
+	/**
+	 * apply job from resume
+	 * 
+	 * @param request
+	 * @param jobId
+	 * @return
+	 */
+	@RequestMapping(value = "/jobs/view/{jobId}/applyresume", method = { RequestMethod.POST })
+	@ResponseBody
+	public ResponseEntity<?> applyForJobWithResume(HttpServletRequest request, @PathVariable Long jobId,
+			HttpEntity<String> httpEntity, @RequestParam("file") MultipartFile resume) {
+
+		if (resume == null || resume.isEmpty()) {
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.BAD_REQUEST.value(), "Please upload resume"),
+					HttpStatus.BAD_REQUEST);
+		}
+		Job job = jobRepo.findOne(jobId);
+		// sanity checks
+		if (request.getSession().getAttribute("loggedIn") == null
+				|| !((String) request.getSession().getAttribute("loggedIn")).equals("user")) {
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.FORBIDDEN.value(), "User not logged in"), HttpStatus.FORBIDDEN);
+		}
+
+		String emailid = (String) request.getSession().getAttribute("email");
+		System.out.println("inside apply : Email ---> " + emailid);
+
+		// sanity checks
+		if (job == null) {
+			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.NOT_FOUND.value(),
+					"Job with id " + String.valueOf(jobId) + " Not found"), HttpStatus.NOT_FOUND);
+		}
+		User user = userRepo.findByEmailid(emailid);
+		if (user == null) {
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.NOT_FOUND.value(), "User with email " + emailid + " Not found"),
+					HttpStatus.NOT_FOUND);
+		}
+		List<Application> userApps = appRepo.findByUserAndType(user, ApplicationType.APPLIED);
+		if (userApps != null && userApps.size() >= 5) {
+			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.FORBIDDEN.value(),
+					"Sorry, you can only apply to 5 jobs at a time."), HttpStatus.FORBIDDEN);
+		}
+		Profile profile = profileRepo.findOne(user.getUserid());
+		if (profile == null) {
+			profile = new Profile();
+		}
+
+		String resumePath = null;
+		try {
+			resumePath = saveResume(resume, user.getUserid(), job.getJobid());
+		} catch (IOException e) {
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.BAD_REQUEST.value(), "Unable to save resume."),
+					HttpStatus.BAD_REQUEST);
+		}
+
+		profile.setUserid(user.getUserid());
+		profile.setResumePath(resumePath);
+		ApplicationStatus status = ApplicationStatus.PENDING;
+		ApplicationType type = ApplicationType.APPLIED;
+		Application application = new Application(user, job, type, status);
+
+		try {
+			appRepo.save(application);
+		} catch (DataIntegrityViolationException e) {
+			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.CONFLICT.value(),
+					"You have already applied for this job. " + "Your emailID: " + emailid + ". Job ID: " + jobId),
+					HttpStatus.CONFLICT);
+		}
+
+		// email
+		String subject = "Thank you for applying to " + job.getCompany().getName() + " via Job-Board";
+		try {
+			controller.sendEmail(user.getEmailid(),
+					"You successfully applied to the job. Below is the description.\n" + job.getDescription(), subject);
+		} catch (Exception e) {
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.OK.value(), "Unable to send email. But applied to job"),
+					HttpStatus.OK);
+		}
+
+		return new ResponseEntity<>(HttpStatus.OK);
+
+	}
+
+	private String saveResume(MultipartFile resume, Long userid, Long jobid) throws IOException {
+		// save resume
+		String userdirPath = RESUME_DIR + "/user" + String.valueOf(userid) + "_job" + String.valueOf(jobid);
+		File userDir = new File(userdirPath);
+		if (!userDir.exists()) {
+			userDir.mkdirs();
+		}
+		String resumePath = userdirPath + "/" + resume.getOriginalFilename();
+		saveFile(resume, resumePath);
+		return resumePath;
+	}
+
+	private void saveFile(MultipartFile file, String resumePath) throws IOException {
+		byte[] bytes = file.getBytes();
+		Path path = Paths.get(resumePath);
+		Files.write(path, bytes);
+		System.out.println("file saved at " + resumePath);
+	}
+
 }

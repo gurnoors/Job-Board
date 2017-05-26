@@ -21,10 +21,10 @@ public class Profile {
 	@Column(name = "userid", unique = true, nullable = false)
 	private Long userid;
 
-	@Column(name = "firstname", nullable = false)
+	@Column(name = "firstname")
 	private String firstname;
 
-	@Column(name = "lastname", nullable = false)
+	@Column(name = "lastname")
 	private String lastname;
 
 	private String imageloc;
@@ -43,7 +43,7 @@ public class Profile {
 	
 	private String phone;
 	
-//	private String resumePath;
+	private String resumePath;
 	
 	//public Profile(Long userid, String firstname, String lastname, String imageloc, String intro, String workex,
 	//		String education, List<String> skills, String phone) {
@@ -136,14 +136,14 @@ public class Profile {
 	public void setPhone(String phone) {
 		this.phone = phone;
 	}
-//
-//	public String getResumePath() {
-//		return resumePath;
-//	}
-//
-//	public void setResumePath(String resumePath) {
-//		this.resumePath = resumePath;
-//	}
+
+	public String getResumePath() {
+		return resumePath;
+	}
+
+	public void setResumePath(String resumePath) {
+		this.resumePath = resumePath;
+	}
 
 	
 }
