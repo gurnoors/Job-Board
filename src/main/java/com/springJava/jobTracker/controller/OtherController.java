@@ -8,6 +8,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.mail.internet.MimeMessage;
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,8 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -36,6 +39,9 @@ import com.springJava.jobTracker.repo.JobRepo;
 import com.springJava.jobTracker.repo.ProfileRepo;
 import com.springJava.jobTracker.repo.UserRepo;
 
+import javassist.expr.NewArray;
+import javassist.tools.web.Webserver;
+
 import javax.servlet.http.HttpServletRequest;
 
 import com.google.gson.Gson;
@@ -47,7 +53,6 @@ import com.google.gson.JsonObject;
 public class OtherController {
 	private static final String RESUME_DIR = System.getProperty("user.dir");
 	private static Gson gson = new GsonBuilder().setPrettyPrinting().create();
-	private static WebController controller = new WebController();
 
 	@Autowired
 	JobRepo jobRepo;
@@ -59,6 +64,8 @@ public class OtherController {
 	ProfileRepo profileRepo;
 	@Autowired
 	ApplicationRepo appRepo;
+	@Autowired
+	private JavaMailSender sender;
 
 	/**
 	 * 5) Employer/User Login [POST request]
@@ -282,9 +289,12 @@ public class OtherController {
 		// email
 		String subject = "Thank you for applying to " + job.getCompany().getName() + " via Job-Board";
 		try {
-			controller.sendEmail(user.getEmailid(),
+			sendEmail(user.getEmailid(),
 					"You successfully applied to the job. Below is the description.\n" + job.getDescription(), subject);
 		} catch (Exception e) {
+			System.out.println(e);
+			e.printStackTrace();
+			
 			return new ResponseEntity<ControllerError>(
 					new ControllerError(HttpStatus.OK.value(), "Unable to send email. But applied to job"),
 					HttpStatus.OK);
@@ -687,7 +697,7 @@ public class OtherController {
 		// email
 		String subject = "Thank you for applying to " + job.getCompany().getName() + " via Job-Board";
 		try {
-			controller.sendEmail(user.getEmailid(),
+			sendEmail(user.getEmailid(),
 					"You successfully applied to the job. Below is the description.\n" + job.getDescription(), subject);
 		} catch (Exception e) {
 			return new ResponseEntity<ControllerError>(
@@ -716,6 +726,18 @@ public class OtherController {
 		Path path = Paths.get(resumePath);
 		Files.write(path, bytes);
 		System.out.println("file saved at " + resumePath);
+	}
+	
+	// Method for sending an email
+	private void sendEmail(String recepient, String msg, String subject) throws Exception {
+		MimeMessage message = sender.createMimeMessage();
+		MimeMessageHelper helper = new MimeMessageHelper(message);
+
+		helper.setTo(recepient);
+		helper.setText(msg);
+		helper.setSubject(subject);
+
+		sender.send(message);
 	}
 
 }

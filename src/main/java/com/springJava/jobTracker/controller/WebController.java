@@ -395,6 +395,8 @@ public class WebController {
 					+ " is updated successfully. Below are the job details:\nJob-Title: " + job_title + "\nSkills: "
 					+ skills + "\ndescription: " + desc + "\nLocation: " + location + ".\n\nThanks,\nJob-Borad.",
 					"Job with id " + id + " updated in Job-Board");
+			boolean sent = emailNonTerminalApplicants(job);
+			System.out.println("Emails to applicants sent: "+sent);
 			return new ResponseEntity<String>("Email sent successfully with the job details", HttpStatus.OK);
 		} catch (Exception ex) {
 			return new ResponseEntity<String>("Error sending email " + ex, HttpStatus.INTERNAL_SERVER_ERROR);
