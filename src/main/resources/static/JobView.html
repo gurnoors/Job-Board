@@ -67,60 +67,33 @@
             </form>
             
             <div id="data">
-                    	 <form>
-           				 <input type="file" id="userfile" name = "userfile" size = "20">
-            		     <br/><br/>
-            				<input type="button" id="upload" class="btn btn-primary" value="Apply With Resume">
+                    	 <form id="fileinfo" method="POST" action = "/" enctype="multipart/form-data" onsubmit = "uploadResume()">
+           				 <input type="file" id="file" name = "file">
+           				 <INPUT TYPE="hidden" NAME="redirect" VALUE="/Dashboard.html">
+            		     <input type="submit" id="upload" value="Apply With Resume">
+            		     
        					 </form>
        		</div>
        					 
 				<div id = "errorMessage"></div>
         </div>
     </div>
-</div>
-
-
-
+</div>	
 
 <script>
-        $(document).ready(function(){
-        	
-                $('#upload').click(function(){
-                	var control = document.getElementById("userfile");
-                	console.log(control);
-                    console.log('upload button clicked!')
-                    var fd = new FormData();  
-                    
-                    fd.append('userfile', control.files[0]);
-                    
-                    jobID = localStorage.getItem("jobId");
 
-                    var url = "/jobs/view/" + Number(jobID) + "/applyresume";
-                    
-                    $.ajax({
-                      url: url,
-                      data: fd,
-                      processData: false,
-                      contentType: false,
-                      type: 'POST',
-                      success: function(data){
-                        console.log('upload success!')
-                        $('#data').empty();
-                        $('#data').append(data);
-
-                      }
-                    });
-                });
-        });
-    </script>
+function uploadResume() 
+{
+	var frm = document.getElementById('fileinfo') || null;
+	if(frm) {
+	   frm.action = 'jobs/view/'+localStorage.getItem("jobId")+'/applyresume';
+	}
+	
+	
+	}
 
 
-
-
-
-
-
-
+</script>
 
 </body>
 </html>
