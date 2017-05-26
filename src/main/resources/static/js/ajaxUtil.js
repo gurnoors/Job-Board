@@ -117,11 +117,11 @@ function viewJobs() {
     if(length%5==0)
         pageNumbers = length/5;
     else
-        pageNumbers = (length/5) + 1;
+        pageNumbers = Math.floor(length/5) + 1;
 
-    console.log(pageNumbers);
+    console.log(pageNumbers + " --> " + length + " --> " + length%5);
 
-    for (var i = 0; i < searchResponseObj.length; i++) {
+    for (var i = 0; i < 5; i++) {
 
         var jobid = searchResponseObj[i]["jobid"];
         var jobtitle = searchResponseObj[i]["jobtitle"];
@@ -149,58 +149,71 @@ function viewJobs() {
 
     }
 
-    for (var i = 1 ; i <= pageNumbers.length; i++) {
-
-        var pagination = '<a href="#" onclick = "callSearch(' +searchKeyword +'/?start='+((i-1)*5+1)+')">'+i+'</a>';
-
-        $(pagination).appendTo("#paginationResults");
+    console.log(pageNumbers);
+    
+    for (var i = 1 ; i <= pageNumbers; i++) {
+    	var url = searchKeyword +'?start='+ ((i-1)*5+1);
+    	console.log(url);
+    	var realURL = url.substr(1);
+     	console.log(realURL);
+     	localStorage.setItem("searchKeyword",searchKeyword);
+        var pagination = '<a href="#" onclick = "callSearch(' + i +')">'+i+'</a>';
+        
+        $(pagination).appendTo("#pageResults");
 
     }
 
 
 }
 
-function callSearch(url) {
+function callSearch(pageNumber) {
 
+ 	var url = localStorage.getItem("searchKeyword");
+ 	url = url + "?number=" + ((pageNumber-1)*5+1);
+ 	
+	
+	console.log("called " + url);
+	
     $('#searchJobResults').empty();
 
     var searchRequestObj = {};
+    var searchResponseObj = {};
 
-    ajaxCall("GET", url, null , function (status, body) {
+    ajaxCall("GET", url, searchRequestObj , function (status, body) {
 
         if (status == 200 || status == 201) {
             var searchResponseObj = JSON.parse(body);
+            console.log(JSON.stringify(searchResponseObj));
         }
         else {
             console.log("Search not done : " + status);
-            
-           
-            
+  
         }
+        
+        for (var i = 0; i < searchResponseObj.length; i++) {
 
-    });
-
-    for (var i = 0; i < searchResponseObj.length; i++) {
-
-        var jobid = searchResponseObj[i]["jobid"];
-        var jobtitle = searchResponseObj[i]["jobtitle"];
-        var skill = searchResponseObj[i]["skill"];
-        var description = searchResponseObj[i]["description"];
-        var location = searchResponseObj[i]["location"];
-        var salary = searchResponseObj[i]["salary"];
-        var company = searchResponseObj[i]["company"];
+        	console.log("");
+            var jobid = searchResponseObj[i]["jobid"];
+            var jobtitle = searchResponseObj[i]["jobtitle"];
+            var skill = searchResponseObj[i]["skill"];
+            var description = searchResponseObj[i]["description"];
+            var location = searchResponseObj[i]["location"];
+            var salary = searchResponseObj[i]["salary"];
+            var company = searchResponseObj[i]["company"];
 
 
-        var searchList = '<a href="#" id = "jobTitleId" onclick = "redirectjobviewPage(' +jobid +')"><b>'+  (i+1) + ") " +
-            jobtitle + '</b></a><p></p>' +
-            '<p><b>Job Requestion Number : </b>'+jobid+'</p>'+
-            '<p><b>Location : </b>'+location+'</p><hr>';
+            var searchList = '<a href="#" id = "jobTitleId" onclick = "redirectjobviewPage(' +jobid +')"><b>'+  (i+1) + ") " +
+                jobtitle + '</b></a><p></p>' +
+                '<p><b>Job Requestion Number : </b>'+jobid+'</p>'+
+                '<p><b>Location : </b>'+location+'</p><hr>';
 
-        $(searchList).appendTo("#searchJobResults");
+            $(searchList).appendTo("#searchJobResults");
+
+
 
     }
-
-
+        
+    });
 
 }
 

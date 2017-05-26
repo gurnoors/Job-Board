@@ -255,7 +255,7 @@ function getAllUrlParams(url) {
 
 function login(e) {
 
-	alert("IN login");
+
     e.preventDefault();
     var loginForm = e.target;
     var inputArray = loginForm.getElementsByTagName("input");
@@ -274,7 +274,7 @@ function login(e) {
 
     }
     
-	alert("beofre jaax call");
+
 	
 	ajaxCall("POST", "/login", loginRequestObj, function (status, body) {
         
