@@ -151,18 +151,23 @@ function viewJobs() {
 
     console.log(pageNumbers);
     
+    var startSymbol = '<a href="#">&laquo;</a>';
+    $(startSymbol).appendTo("#pageResults");
+    
     for (var i = 1 ; i <= pageNumbers; i++) {
     	var url = searchKeyword +'?start='+ ((i-1)*5+1);
     	console.log(url);
     	var realURL = url.substr(1);
      	console.log(realURL);
      	localStorage.setItem("searchKeyword",searchKeyword);
-        var pagination = '<a href="#" onclick = "callSearch(' + i +')">'+i+'</a>';
+        var pagination = '<a href="#" onclick = "callSearch(' + i +')"><b>'+i+'</b></a>';
         
         $(pagination).appendTo("#pageResults");
 
     }
 
+    var endSymbol =  '<a href="#">&raquo;</a>';
+    $(endSymbol).appendTo("#pageResults");
 
 }
 
