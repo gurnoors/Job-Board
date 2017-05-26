@@ -36,7 +36,10 @@
           <div><b>Skills:</b> {{ profile.skills }}</div>
           <div><b>Work Experience:</b> {{ profile.workex }}</div>
           <br></br>
-          <input type="submit" id="submit" class="btn btn-primary btn-lg login-button" value="Back to Dashboard" ng-click="gotoDashboard()"/>
+          <div style="display:inline;">
+          	<a href="{{ profile.resumePath }}" class="btn btn-primary">Download Resume</a>
+          	<input type="submit" id="submit" class="btn btn-primary" value="Back to Dashboard" ng-click="gotoDashboard()"/>
+          </div>
         </div>
         </div>
         </div>
