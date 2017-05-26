@@ -434,7 +434,7 @@ function loadjobviewPage()
 
 function apply(e) {
 
-    console.log("IN apply function ");
+    console.log("In apply using profile function ");
     e.preventDefault();
     var jobID;
 

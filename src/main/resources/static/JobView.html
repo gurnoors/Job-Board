@@ -24,6 +24,8 @@
 </head>
 
 
+
+
 <body onload = "loadjobviewPage()">
 
 <div class="container">
@@ -48,16 +50,30 @@
      			<p id = "company"></p>
      			</div>
                 </div>
+                
+                 
 	
                 <div class="form-group">
-                    <label class="col-md-3 control-label"></label>
+                    	<label class="col-md-3 control-label"></label>
+                    	 
+                    	                     
                     <div class="col-md-8">
-                        <input type="button" id="applybtn" class="btn btn-primary" value="Apply" onclick="apply(event)">
-                        <span></span>
+                    	
+                        <input type="button" id="applybtn" class="btn btn-primary" value="Apply With Profile" onclick="apply(event)">
+              
                         <input type="button" id="markinterestedbtn" class="btn btn-primary" value="Mark Interested" onclick="interested(event)">
                     </div>
                 </div>
             </form>
+            
+            <div id="data">
+                    	 <form>
+           				 <input type="file" id="userfile" name = "userfile" size = "20">
+            		     <br/><br/>
+            				<input type="button" id="upload" class="btn btn-primary" value="Apply With Resume">
+       					 </form>
+       		</div>
+       					 
 				<div id = "errorMessage"></div>
         </div>
     </div>
@@ -67,9 +83,36 @@
 
 
 <script>
+        $(document).ready(function(){
+        	
+                $('#upload').click(function(){
+                	var control = document.getElementById("userfile");
+                	console.log(control);
+                    console.log('upload button clicked!')
+                    var fd = new FormData();  
+                    
+                    fd.append('userfile', control.files[0]);
+                    
+                    jobID = localStorage.getItem("jobId");
 
-	
-</script>
+                    var url = "/jobs/view/" + Number(jobID) + "/applyresume";
+                    
+                    $.ajax({
+                      url: url,
+                      data: fd,
+                      processData: false,
+                      contentType: false,
+                      type: 'POST',
+                      success: function(data){
+                        console.log('upload success!')
+                        $('#data').empty();
+                        $('#data').append(data);
+
+                      }
+                    });
+                });
+        });
+    </script>
 
 
 
