@@ -289,7 +289,7 @@ public class WebController {
 
 		if (user == null) {
 			return new ResponseEntity<ControllerError>(
-					new ControllerError(HttpStatus.NOT_FOUND.value(), "User with emailid " + emailid + " not found"),
+					new ControllerError(HttpStatus.NOT_FOUND.value(), "User with id " + user.getUserid() + "not found"),
 					HttpStatus.NOT_FOUND);
 		}
 		
@@ -479,7 +479,7 @@ public class WebController {
 					"Job with id " + id + " updated in Job-Board");
 			return new ResponseEntity<String>("Email sent successfully with the job details", HttpStatus.OK);
 		} catch (Exception ex) {
-			return new ResponseEntity<String>("Email not send, but status updated " + ex, HttpStatus.OK);
+			return new ResponseEntity<String>("Email not sent, but status updated " + ex, HttpStatus.OK);
 		}
 
 	}
