@@ -1,7 +1,10 @@
 package com.springJava.jobTracker.controller;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -10,7 +13,9 @@ import java.util.List;
 
 import javax.mail.internet.MimeMessage;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
+import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpEntity;
@@ -48,10 +53,11 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.mysql.jdbc.Field;
 
 @RestController
 public class OtherController {
-	private static final String RESUME_DIR = System.getProperty("user.dir");
+	private static final String RESUME_DIR = System.getProperty("user.dir") +"/resumes";
 	private static Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
 	@Autowired
@@ -681,6 +687,7 @@ public class OtherController {
 		}
 
 		profile.setUserid(user.getUserid());
+		resumePath = "/download?path="+resumePath;
 		profile.setResumePath(resumePath);
 		ApplicationStatus status = ApplicationStatus.PENDING;
 		ApplicationType type = ApplicationType.APPLIED;
@@ -738,6 +745,23 @@ public class OtherController {
 		helper.setSubject(subject);
 
 		sender.send(message);
+	}
+	
+	@RequestMapping(value="/download", method=RequestMethod.GET)
+	public void getDownload(HttpServletResponse response, @RequestParam String path) throws IOException {
+
+//		String path1 = "/Users/gurnoorsinghbhatia/Documents/code/sem2/cmpe275/Job-Board/Job-Board/src/main/resources/user3_job11/GoF Design Patterns - Iterator (2) copy.pdf"; 
+		// Get your file stream from wherever.
+		File file = new File(path);
+		InputStream myStream = new FileInputStream(file);
+
+		// Set the content type and attachment header.
+		response.addHeader("Content-disposition", "attachment;filename="+file.getName());
+		response.setContentType("txt/pdf");
+
+		// Copy the stream to the response's output stream.
+		IOUtils.copy(myStream, response.getOutputStream());
+		response.flushBuffer();
 	}
 
 }
