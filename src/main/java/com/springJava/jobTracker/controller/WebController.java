@@ -425,52 +425,41 @@ public class WebController {
 
 		JobStatus status = JobStatus.OPEN;
 		if (status_tmp.equals("FILLED")) {
+			//email
+			boolean areEmailsSent = emailNonTerminalApplicants(job);
+			System.out.println("areEmailsSent: "+areEmailsSent);
+			//updae status
 			status = JobStatus.FILLED;
 			List<Application> appList = appRepo.findByStatusAndJob(ApplicationStatus.PENDING, job);
 			for (Application a : appList) {
 				appRepo.updateApplicationStatus_JS(ApplicationStatus.FILLED, a.getApplicationid());
 			}
 		} else if (status_tmp.equals("CANCELLED")) {
+			
 			status = JobStatus.CANCELLED;
 			List<Application> appList = appRepo.findByStatusAndJob(ApplicationStatus.OFFER_ACCEPTED, job);
 			if (!appList.isEmpty()) {
 				return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.FORBIDDEN.value(),
 						"Job cannot be cancelled, one or more offers accepted."), HttpStatus.FORBIDDEN);
 			} else {
-				boolean areEmailsSent = true;
-				ApplicationStatus[] nonTerminalStatesArr = { ApplicationStatus.PENDING, ApplicationStatus.OFFERED };
-				List<ApplicationStatus> nonTerminalStates = new ArrayList<ApplicationStatus>(
-						Arrays.asList(nonTerminalStatesArr));
-				List<Application> sadApplications = appRepo.findByJobAndStatusIn(job, nonTerminalStates);
-
-				// List<String> sadEmails =
-				// appRepo.getEmailsByJobid(job.getJobid());
-				// for (String sadEmail : sadEmails) {
-				for (Application sadApplication : sadApplications) {
-					String sadEmail = sadApplication.getUser().getEmailid();
-					String sadMsg = "Your profile was very impressive, however we had to cancel"
-							+ " this opening due to some unforseeable circumstances. We have kept your resme on file in case a more approprite opportunity comes up."
-							+ " Please have a look at other jobs at our company. We apologize for the inconvenience";
-					String sadSubject = job.getJobtitle() + " position cancelled";
-					try {
-						sendEmail(sadEmail, sadMsg, sadSubject);
-					} catch (Exception e) {
-						System.out.println("Email to " + sadEmail + " not sent");
-						e.printStackTrace();
-						areEmailsSent = false;
-					}
-				}
+				//email
+				boolean areEmailsSent = emailNonTerminalApplicants(job);
+				//delete
 				Long deletedAppsCount = appRepo.removeByJob(job);
+				System.out.println("Deleted "+String.valueOf(deletedAppsCount)+" related applications");
+				
 				if (areEmailsSent) {
 					return new ResponseEntity<String>(
-							"Job cancelled, " + String.valueOf(deletedAppsCount)
+							"Job cancelled, "
 									+ " related applications deleted and applicants notified" + " via email. ",
 							HttpStatus.OK);
 				} else {
-					return new ResponseEntity<String>("Job cancelled, " + String.valueOf(deletedAppsCount)
+					return new ResponseEntity<String>("Job cancelled, " 
 							+ " related applications deleted. Emails not sent", HttpStatus.OK);
 				}
 			}
+			
+			
 
 		} else {
 			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.BAD_REQUEST.value(),
@@ -488,9 +477,35 @@ public class WebController {
 					"Job with id " + id + " updated in Job-Board");
 			return new ResponseEntity<String>("Email sent successfully with the job details", HttpStatus.OK);
 		} catch (Exception ex) {
-			return new ResponseEntity<String>("Error sending email " + ex, HttpStatus.INTERNAL_SERVER_ERROR);
+			return new ResponseEntity<String>("Email not send, but status updated " + ex, HttpStatus.OK);
 		}
 
+	}
+
+	private boolean emailNonTerminalApplicants(Job job) {
+		boolean areEmailsSent = true;
+		ApplicationStatus[] nonTerminalStatesArr = { ApplicationStatus.PENDING, ApplicationStatus.OFFERED };
+		List<ApplicationStatus> nonTerminalStates = new ArrayList<ApplicationStatus>(
+				Arrays.asList(nonTerminalStatesArr));
+		List<Application> sadApplications = appRepo.findByJobAndStatusIn(job, nonTerminalStates);
+
+		for (Application sadApplication : sadApplications) {
+			String sadEmail = sadApplication.getUser().getEmailid();
+			System.out.println("applicationID: "+sadApplication.getApplicationid());
+			System.out.println(sadEmail);
+			String sadMsg = "Your profile was very impressive, however we had to cancel"
+					+ " this opening due to some unforseeable circumstances. We have kept your resme on file in case a more approprite opportunity comes up."
+					+ " Please have a look at other jobs at our company. We apologize for the inconvenience";
+			String sadSubject = job.getJobtitle() + " position cancelled";
+			try {
+				sendEmail(sadEmail, sadMsg, sadSubject);
+			} catch (Exception e) {
+				System.out.println("Email to " + sadEmail + " not sent");
+				e.printStackTrace();
+				areEmailsSent = false;
+			}
+		}
+		return areEmailsSent;
 	}
 
 	// ------- Get all the applications of job for employer ------------
