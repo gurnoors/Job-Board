@@ -779,7 +779,7 @@ function editProfileEvent(e)
 
     e.preventDefault();
 
-    alert("In edit Profile");
+
 
     var editProfile = e.target;
     var inputArray = editProfile.getElementsByTagName("input");
@@ -830,12 +830,12 @@ function editProfileEvent(e)
     ajaxCall("POST", url, searchRequestObj, function (status, body) {
 
         if (status == 201) {
-            alert("Profile is successfully created");
+            
             window.location.href = "/Dashboard.html";
         }
 
         else if (status == 200) {
-            alert("Profile is successfully updated");
+            
             window.location.href = "/Dashboard.html";
         }
 
