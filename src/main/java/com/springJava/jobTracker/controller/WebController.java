@@ -1,5 +1,6 @@
 package com.springJava.jobTracker.controller;
 
+import java.awt.print.PrinterIOException;
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -10,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.PriorityQueue;
 import java.util.Random;
 import java.util.Set;
 
@@ -341,7 +343,7 @@ public class WebController {
 		}
 
 		String emailid = (String) request.getSession().getAttribute("email");
-
+		
 		Company company = compRepo.findByEmailid(emailid);
 		if (company == null) {
 			return new ResponseEntity<ControllerError>(
