@@ -711,9 +711,15 @@ public class OtherController {
 		try {
 			appRepo.save(application);
 		} catch (DataIntegrityViolationException e) {
-			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.CONFLICT.value(),
-					"You have already applied for this job. " + "Your emailID: " + emailid + ". Job ID: " + jobId),
-					HttpStatus.CONFLICT);
+			application = appRepo.findByJobAndUser(job, user);
+			appRepo.updateApplicationType(type, application.getApplicationid());
+
+			// return new ResponseEntity<ControllerError>(new
+			// ControllerError(HttpStatus.CONFLICT.value(),
+			// "You have already applied for this job. " + "Your emailID: " +
+			// emailid + ". Job ID: " + jobId),
+			// HttpStatus.CONFLICT);
+
 		}
 
 		// email
