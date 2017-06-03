@@ -5,6 +5,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -19,6 +21,7 @@ import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -208,7 +211,7 @@ public class OtherController {
 	@RequestMapping(value = "/jobs/view/{jobId}/apply", method = { RequestMethod.POST })
 	@ResponseBody
 	public ResponseEntity<?> applyForJob(HttpServletRequest request, @PathVariable Long jobId,
-			HttpEntity<String> httpEntity) {
+			HttpEntity<String> httpEntity, HttpServletResponse httpServletResponse) {
 		Job job = jobRepo.findOne(jobId);
 		// sanity checks
 		if (request.getSession().getAttribute("loggedIn") == null
@@ -306,6 +309,7 @@ public class OtherController {
 					HttpStatus.OK);
 		}
 
+		
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
 
@@ -634,11 +638,12 @@ public class OtherController {
 	 * @param request
 	 * @param jobId
 	 * @return
+	 * @throws URISyntaxException 
 	 */
 	@RequestMapping(value = "/jobs/view/{jobId}/applyresume", method = { RequestMethod.POST })
 	@ResponseBody
 	public ResponseEntity<?> applyForJobWithResume(HttpServletRequest request, @PathVariable Long jobId,
-			HttpEntity<String> httpEntity, @RequestParam("file") MultipartFile resume) {
+			HttpEntity<String> httpEntity, @RequestParam("file") MultipartFile resume, HttpServletResponse httpServletResponse) throws URISyntaxException {
 
 		if (resume == null || resume.isEmpty()) {
 			return new ResponseEntity<ControllerError>(
@@ -711,9 +716,11 @@ public class OtherController {
 					new ControllerError(HttpStatus.OK.value(), "Unable to send email. But applied to job"),
 					HttpStatus.OK);
 		}
-
-		return new ResponseEntity<>(HttpStatus.OK);
-
+		
+		URI uri = new URI("/searchResults.html");
+	    HttpHeaders httpHeaders = new HttpHeaders();
+	    httpHeaders.setLocation(uri);
+	    return new ResponseEntity<>(httpHeaders, HttpStatus.SEE_OTHER);
 	}
 
 	private String saveResume(MultipartFile resume, Long userid, Long jobid) throws IOException {
