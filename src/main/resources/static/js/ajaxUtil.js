@@ -20,6 +20,28 @@ function ajaxCall(method, url, data, callback) {
     }
 }
 
+function uploadResume() 
+{
+	var frm = document.getElementById('fileinfo') || null;
+	
+	console.log(frm);
+	
+	if(frm == null)
+		{
+			alert("Resume is not available");
+			window.location.href = "/JobView.html";
+		}
+	
+	if(frm) {
+		alert("applying to a job");
+	   frm.action = 'jobs/view/'+localStorage.getItem("jobId")+'/applyresume';
+	}
+	
+	
+	
+	
+	}
+
 
 function search(e) {
 
@@ -93,7 +115,6 @@ function search(e) {
             
         }
 
-
     });
 
 }
@@ -120,16 +141,21 @@ function viewJobs() {
         pageNumbers = Math.floor(length/5) + 1;
 
     console.log(pageNumbers + " --> " + length + " --> " + length%5);
-
+    console.log(searchResponseObj[0]);
+    
+    
     for (var i = 0; i < 5; i++) {
 
-        var jobid = searchResponseObj[i]["jobid"];
-        var jobtitle = searchResponseObj[i]["jobtitle"];
-        var skill = searchResponseObj[i]["skill"];
-        var description = searchResponseObj[i]["description"];
-        var location = searchResponseObj[i]["location"];
-        var salary = searchResponseObj[i]["salary"];
-        var company = searchResponseObj[i]["company"];
+    	var obj = searchResponseObj[i];
+
+    	
+        var jobid = obj["jobid"];
+        var jobtitle = obj["jobtitle"];
+        var skill = obj["skill"];
+        var description = obj["description"];
+        var location = obj["location"];
+        var salary = obj["salary"];
+        var company = obj["company"];
 
 
         var searchList = '<a href="#" id = "jobTitleId" onclick = "redirectjobviewPage(' +jobid +')"><b>'+  (i+1) + ") " +
@@ -137,15 +163,15 @@ function viewJobs() {
             '<p><b>Job Requestion Number : </b>'+jobid+'</p>'+
             '<p><b>Location : </b>'+location+'</p><hr>';
         
-       //adding toggle interested/not interested in search results page.
-  /*      '<div class="form-group">'+
-        '<button type="button" id = "toggleInterested-' +jobid+'"class="btn btn-primary btn-group-vertical login-button" onclick = "toggleInterested('+jobid+')">'+
-        'Interested</button>&nbsp'+
-        '</div>
-*/            
-         
+           /* '<div class="form-group">'+
+            '<button type="button" id = "toggleInterested-' +jobid+'"class="btn btn-primary btn-group-vertical login-button" onclick = "toggleInterested('+jobid+')">'+
+            'Mark Interested</button>&nbsp'+
+            '</div>';*/
+       
 
         $(searchList).appendTo("#searchJobResults");
+        
+        
 
     }
 
@@ -161,9 +187,7 @@ function viewJobs() {
      	console.log(realURL);
      	localStorage.setItem("searchKeyword",searchKeyword);
         var pagination = '<a href="#" onclick = "callSearch(' + i +')"><b>'+i+'</b></a>';
-        
         $(pagination).appendTo("#pageResults");
-
     }
 
     var endSymbol =  '<a href="#">&raquo;</a>';
@@ -171,10 +195,138 @@ function viewJobs() {
 
 }
 
+function toggleInterested(jobId) {
+	var applyRequestObj = {};
+	
+	console.log("Interested job is " + jobId);
+	
+	checkStatusSearch(jobId);
+	
+	checkStatusObj = localStorage.getItem("checkStatusResultObj");
+
+    if(checkStatusObj != "null")
+         checkStatusObj = JSON.parse(checkStatusObj);
+
+
+
+    console.log(JSON.stringify(checkStatusObj));
+    
+    if(checkStatusObj == null || JSON.stringify(checkStatusObj) == "null")
+        {
+    		System.out.println("chekcing");
+    		applyRequestObj["applicationType"] = "INTERESTED";
+    		console.log(applyRequestObj);
+        }
+    else if (checkStatusObj !== "null" || checkStatusObj != null )
+    	{
+    		console.log(checkStatusObj + " is not null");
+    	  if (checkStatusObj["type"] == "INTERESTED" )
+    		  {
+    		  	applyRequestObj["applicationType"] = "NULL";
+    		  }
+    	}
+    
+    console.log("*****************");
+    
+
+    applyRequestObj["Resume"] = "";
+    console.log(applyRequestObj);
+    
+    var url = "/jobs/view/" + jobId + "/apply";
+	
+    
+    ajaxCall("POST", url, applyRequestObj, function (status, body) {
+        if (status == 200) {
+        	 console.log(JSON.stringify(applyRequestObj));
+            if(applyRequestObj["applicationType"] == "INTERESTED")
+                console.log("Job successfully marked interested");
+            else if(applyRequestObj["applicationType"] == "NULL")
+                console.log("Job successfully marked not interested");
+            
+            checkStatusSearch(jobId);
+        }
+        else if (status == 403)
+        {
+            alert("Failed to mark the job as interested");
+        }
+
+    });
+    
+    
+    
+	
+	
+	
+}
+
+function checkStatusSearch(jobId)
+{
+	var checkStatus = "user/"+jobId+"/getApplicationStatus";
+    var checkStatusRequestObj = {};
+    var checkStatusResponseObj = {};
+    
+    ajaxCall("GET", checkStatus, checkStatusRequestObj,function (status, body) {
+
+        if (status == 200) {
+
+        	console.log(checkStatusResponseObj);
+
+            if(body=="null")
+            {
+                localStorage.setItem("checkStatusResultObj","null");
+
+            }
+            else {
+                checkStatusResponseObj = JSON.parse(body);
+                //document.getElementById("Button").disabled = true;
+                if(checkStatusResponseObj["type"] == "APPLIED")
+                {
+
+                	var id = "toggleInterested-"+jobId;
+                	
+                		document.getElementById(id).value = "Applied&Interested"
+                        document.getElementById(id).disabled = true;
+                	
+                }
+                else if (checkStatusResponseObj["type"] == "INTERESTED")
+
+                {
+                	
+                	var id = "toggleInterested-"+jobId;
+                 
+                    document.getElementById(id).value = "Mark Not Interested"
+                    document.getElementById(id).disabled = false;
+                }
+
+                else if(checkStatusResponseObj["type"] == "NULL")
+                {
+                	var id = "toggleInterested-"+jobId;
+                	
+                	document.getElementById(id).value = "Mark Interested"
+                        document.getElementById(id).disabled = false;
+                	
+                }
+
+                console.log(checkStatusResponseObj);
+                localStorage.setItem("checkStatusResultObj",JSON.stringify(checkStatusResponseObj));
+            }
+
+
+        }
+
+    });
+
+
+}
+
+
+
 function callSearch(pageNumber) {
 
  	var url = localStorage.getItem("searchKeyword");
  	url = url + "?number=" + ((pageNumber-1)*5+1);
+ 	
+ 	
  	
 	
 	console.log("called " + url);
@@ -499,7 +651,6 @@ function interested(e) {
             checkStatusObj = JSON.parse(checkStatusObj);
 
 
-
         console.log(checkStatusObj);
 
         if (checkStatusObj!="null" && checkStatusObj["type"] == "INTERESTED" )
@@ -507,6 +658,7 @@ function interested(e) {
         else
             applyRequestObj["applicationType"] = "INTERESTED";
 
+        
         applyRequestObj["Resume"] = "";
 
         var url = "/jobs/view/" + jobID + "/apply";
@@ -552,6 +704,7 @@ function interestedSection(jobID) {
     var p = checkStatusSection(jobID);
 
     var applyRequestObj = {};
+    
     $.when(p).done(	function() {
 
         console.log("Succesfully Checked the status now!!!!!");
@@ -568,18 +721,35 @@ function interestedSection(jobID) {
 
 
         console.log(checkStatusObj);
-
-        if (checkStatusObj!="null" && checkStatusObj["type"] == "INTERESTED" )
-            applyRequestObj["applicationType"] = "NULL";
+        
+        if(checkStatusObj == null)
+        	console.log("true");
         else
-            applyRequestObj["applicationType"] = "INTERESTED";
+        	console.log("false");
+        
+        
+        if(checkStatusObj == null)
+            {
+        		System.out.println("chekcing");
+        		applyRequestObj["applicationType"] = "INTERESTED";
+        		console.log(applyRequestObj);
+            }
+        else if (checkStatusObj !== "null" || checkStatusObj != null )
+        	{
+        		console.log(checkStatusObj + " is not null");
+        	  if (checkStatusObj["type"] == "INTERESTED" )
+        		  {
+        		  	applyRequestObj["applicationType"] = "NULL";
+        		  }
+        	}
+        
 
         applyRequestObj["Resume"] = "";
 
         var url = "/jobs/view/" + jobID + "/apply";
 
         console.log(url);
-        console.log(JSON.stringify(applyRequestObj));
+        console.log((applyRequestObj));
 
 
         ajaxCall("POST", url, applyRequestObj, function (status, body) {
@@ -696,6 +866,8 @@ function checkStatus(jobReq) {
 
 
         }
+        
+       
 
     });
 

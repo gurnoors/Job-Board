@@ -73,6 +73,10 @@
                 if (obj["errorMessage"] === "emailIdNotFound") {
                     document.getElementById("error1").style.display = "block";
                 }
+                
+                var obj = localStorage.getItem("userType");
+                if(obj === "user" || obj === "employer")
+                	window.location.href ="/Dashboard.html";
 
 
             </script>
