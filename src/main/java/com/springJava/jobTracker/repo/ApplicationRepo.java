@@ -41,4 +41,9 @@ public interface ApplicationRepo extends CrudRepository<Application, Long> {
 //	List<String> getEmailsByJobid(Long jobid);
 
 	List<Application> findByJobAndStatusIn(Job job, List<ApplicationStatus> applicationStatus);
+
+	@Transactional
+	@Modifying(clearAutomatically = true)
+	@Query("update Application p set p.type=?1 where p.applicationid=?2")
+	void updateApplicationType(ApplicationType type, Long applicationid);
 }

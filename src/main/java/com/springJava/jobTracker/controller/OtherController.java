@@ -60,7 +60,7 @@ import com.mysql.jdbc.Field;
 
 @RestController
 public class OtherController {
-	private static final String RESUME_DIR = System.getProperty("user.dir") +"/resumes";
+	private static final String RESUME_DIR = System.getProperty("user.dir") + "/resumes";
 	private static Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
 	@Autowired
@@ -247,6 +247,7 @@ public class OtherController {
 		String body = httpEntity.getBody();
 		System.out.print("Request Body: ");
 		System.out.println(body);
+		Application application = null;
 		if (body == null || equals(body.isEmpty())) {
 			type = ApplicationType.APPLIED;
 		} else {
@@ -256,6 +257,7 @@ public class OtherController {
 			if (jobj.get("applicationType") != null) {
 				switch (jobj.get("applicationType").getAsString().toUpperCase()) {
 				case "INTERESTED":
+					application = appRepo.findByJobAndUser(job, user);
 					type = ApplicationType.INTERESTED;
 					break;
 				case "APPLIED":
@@ -285,14 +287,21 @@ public class OtherController {
 			}
 		}
 
-		Application application = new Application(user, job, type, status);
-
+		if (application == null) {
+			application = new Application(user, job, type, status);
+		}
 		try {
 			appRepo.save(application);
 		} catch (DataIntegrityViolationException e) {
-			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.CONFLICT.value(),
-					"You have already applied for this job. " + "Your emailID: " + emailid + ". Job ID: " + jobId),
-					HttpStatus.CONFLICT);
+			application = appRepo.findByJobAndUser(job, user);
+			appRepo.updateApplicationType(type, application.getApplicationid());
+
+			// return new ResponseEntity<ControllerError>(new
+			// ControllerError(HttpStatus.CONFLICT.value(),
+			// "You have already applied for this job. " + "Your emailID: " +
+			// emailid + ". Job ID: " + jobId),
+			// HttpStatus.CONFLICT);
+
 		}
 
 		// email
@@ -303,13 +312,12 @@ public class OtherController {
 		} catch (Exception e) {
 			System.out.println(e);
 			e.printStackTrace();
-			
+
 			return new ResponseEntity<ControllerError>(
 					new ControllerError(HttpStatus.OK.value(), "Unable to send email. But applied to job"),
 					HttpStatus.OK);
 		}
 
-		
 		return new ResponseEntity<>(HttpStatus.OK);
 	}
 
@@ -638,12 +646,13 @@ public class OtherController {
 	 * @param request
 	 * @param jobId
 	 * @return
-	 * @throws URISyntaxException 
+	 * @throws URISyntaxException
 	 */
 	@RequestMapping(value = "/jobs/view/{jobId}/applyresume", method = { RequestMethod.POST })
 	@ResponseBody
 	public ResponseEntity<?> applyForJobWithResume(HttpServletRequest request, @PathVariable Long jobId,
-			HttpEntity<String> httpEntity, @RequestParam("file") MultipartFile resume, HttpServletResponse httpServletResponse) throws URISyntaxException {
+			HttpEntity<String> httpEntity, @RequestParam("file") MultipartFile resume,
+			HttpServletResponse httpServletResponse) throws URISyntaxException {
 
 		if (resume == null || resume.isEmpty()) {
 			return new ResponseEntity<ControllerError>(
@@ -674,8 +683,9 @@ public class OtherController {
 		}
 		List<Application> userApps = appRepo.findByUserAndType(user, ApplicationType.APPLIED);
 		if (userApps != null && userApps.size() >= 5) {
-			return new ResponseEntity<ControllerError>(new ControllerError(HttpStatus.FORBIDDEN.value(),
-					"Sorry, you can only apply to 5 jobs at a time."), HttpStatus.FORBIDDEN);
+			return new ResponseEntity<ControllerError>(
+					new ControllerError(HttpStatus.FORBIDDEN.value(), "Sorry, you can only apply to 5 jobs at a time."),
+					HttpStatus.FORBIDDEN);
 		}
 		Profile profile = profileRepo.findOne(user.getUserid());
 		if (profile == null) {
@@ -692,7 +702,7 @@ public class OtherController {
 		}
 
 		profile.setUserid(user.getUserid());
-		resumePath = "/download?path="+resumePath;
+		resumePath = "/download?path=" + resumePath;
 		profile.setResumePath(resumePath);
 		ApplicationStatus status = ApplicationStatus.PENDING;
 		ApplicationType type = ApplicationType.APPLIED;
@@ -716,11 +726,11 @@ public class OtherController {
 					new ControllerError(HttpStatus.OK.value(), "Unable to send email. But applied to job"),
 					HttpStatus.OK);
 		}
-		
+
 		URI uri = new URI("/searchResults.html");
-	    HttpHeaders httpHeaders = new HttpHeaders();
-	    httpHeaders.setLocation(uri);
-	    return new ResponseEntity<>(httpHeaders, HttpStatus.SEE_OTHER);
+		HttpHeaders httpHeaders = new HttpHeaders();
+		httpHeaders.setLocation(uri);
+		return new ResponseEntity<>(httpHeaders, HttpStatus.SEE_OTHER);
 	}
 
 	private String saveResume(MultipartFile resume, Long userid, Long jobid) throws IOException {
@@ -741,7 +751,7 @@ public class OtherController {
 		Files.write(path, bytes);
 		System.out.println("file saved at " + resumePath);
 	}
-	
+
 	// Method for sending an email
 	private void sendEmail(String recepient, String msg, String subject) throws Exception {
 		MimeMessage message = sender.createMimeMessage();
@@ -753,17 +763,19 @@ public class OtherController {
 
 		sender.send(message);
 	}
-	
-	@RequestMapping(value="/download", method=RequestMethod.GET)
+
+	@RequestMapping(value = "/download", method = RequestMethod.GET)
 	public void getDownload(HttpServletResponse response, @RequestParam String path) throws IOException {
 
-//		String path1 = "/Users/gurnoorsinghbhatia/Documents/code/sem2/cmpe275/Job-Board/Job-Board/src/main/resources/user3_job11/GoF Design Patterns - Iterator (2) copy.pdf"; 
+		// String path1 =
+		// "/Users/gurnoorsinghbhatia/Documents/code/sem2/cmpe275/Job-Board/Job-Board/src/main/resources/user3_job11/GoF
+		// Design Patterns - Iterator (2) copy.pdf";
 		// Get your file stream from wherever.
 		File file = new File(path);
 		InputStream myStream = new FileInputStream(file);
 
 		// Set the content type and attachment header.
-		response.addHeader("Content-disposition", "attachment;filename="+file.getName());
+		response.addHeader("Content-disposition", "attachment;filename=" + file.getName());
 		response.setContentType("txt/pdf");
 
 		// Copy the stream to the response's output stream.
